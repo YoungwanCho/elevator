@@ -22,37 +22,37 @@ public class Floor : MonoBehaviour
 
     public void InitializeFloor()
     {
-        SetPositionGateObject();
+        CreateGateObject();
     }
 
-    private void SetPositionGateObject()
+    private void CreateGateObject()
     {
         gatePosition = new Vector3[MAX_GATE_COUNT];
         
         for (int i = 0; i < MAX_GATE_COUNT; i++)
         {
-            GameObject gateObject = new GameObject();
-            gateObject.transform.parent = gateParent_;
-            gatePosition[i] = this.GetGateLocalPosition(i);
-            gateObject.transform.localPosition = gatePosition[i];
-            gateObject.transform.localRotation = Quaternion.identity;
-            gateObject.transform.localScale = Vector3.one;
-            gateObject.name = string.Format("{0}Gate", i + 1);
+            gateObject[i] = new GameObject();
+            gateObject[i].transform.parent = gateParent_;
+            gatePosition[i] = this.CalculateGateLocalPosition(i);
+            gateObject[i].transform.localPosition = gatePosition[i];
+            gateObject[i].transform.localRotation = Quaternion.identity;
+            gateObject[i].transform.localScale = Vector3.one;
+            gateObject[i].name = string.Format("{0}Gate", i + 1);
         }
     }	
 
-    private Vector3 GetGateLocalPosition(int gateIndex)
+    private Vector3 CalculateGateLocalPosition(int gateIndex)
     {
         float xPos = 0.0f;
         float yPos = 0.0f;
         float zPos = 0.0f;
         int halfCount = MAX_GATE_COUNT / 2;
-        int rowindex = gateIndex % halfCount;
+        int rowIndex = gateIndex % halfCount;
         bool isLeft = (gateIndex < halfCount);
         int rowInterval = 8 / halfCount; // TODO: 1호기와 4호기의 x값의 차이인데, 나중에 동적으로 구할수있도록 구현
 
         xPos = isLeft ? gatePositionXleft : gatePositionXright;
-        zPos = gatePositionZmin + (gateIndex * rowindex);
+        zPos = gatePositionZmin + (rowIndex * rowInterval);
 
         return new Vector3(xPos, yPos, zPos);
     }
