@@ -7,6 +7,7 @@ public class Floor : MonoBehaviour
     public Transform gateParent_ = null;
     public GameObject[] gateObject = null;
     public Vector3[] gatePosition = null;
+    public Vector3[] gateWorldPostion = null;
 
     private const float gatePositionZmax = 4.0f;
     private const float gatePositionZmin = -4.0f;
@@ -20,21 +21,29 @@ public class Floor : MonoBehaviour
         return gatePosition[gateIndex];
     }
 
+    public Vector3 GetGateWorldPosition(int gateIndex)
+    {
+        return gateWorldPostion[gateIndex];
+    }
+
     public void InitializeFloor()
     {
+        gateObject = new GameObject[MAX_GATE_COUNT];
+        gatePosition = new Vector3[MAX_GATE_COUNT];
+        gateWorldPostion = new Vector3[MAX_GATE_COUNT];
+        
         CreateGateObject();
     }
 
     private void CreateGateObject()
-    {
-        gatePosition = new Vector3[MAX_GATE_COUNT];
-        
+    {        
         for (int i = 0; i < MAX_GATE_COUNT; i++)
         {
             gateObject[i] = new GameObject();
             gateObject[i].transform.parent = gateParent_;
             gatePosition[i] = this.CalculateGateLocalPosition(i);
             gateObject[i].transform.localPosition = gatePosition[i];
+            gateWorldPostion[i] = gateObject[i].transform.position;
             gateObject[i].transform.localRotation = Quaternion.identity;
             gateObject[i].transform.localScale = Vector3.one;
             gateObject[i].name = string.Format("{0}Gate", i + 1);

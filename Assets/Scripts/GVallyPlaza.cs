@@ -12,6 +12,7 @@ public class GVallyPlaza : MonoBehaviour
     public GameObject baseElevator_ = null;
 
     public Floor[] floorInstanceArray = new Floor[MAX_FLOOR_COUNT];
+    public Elevator[] elevatorInstanceArray = new Elevator[MAX_ELEVATOR_COUNT];
 
     public const int FLOOR_HEIGHT_INTERVAL = 1;
     public const int MAX_FLOOR_COUNT = 20;
@@ -26,11 +27,13 @@ public class GVallyPlaza : MonoBehaviour
         {
             InitElevatorPosition(0, i);
         }
+
+        ElevatorOperation();
     }
 
     private void InitElevatorPosition(int floorIndex, int elevatorIndex)
     {
-        elevatorArr[elevatorIndex].GetComponent<Elevator>() .SetElevatorPosition(floorInstanceArray[floorIndex].GetGatePoision(elevatorIndex));
+        elevatorInstanceArray[elevatorIndex].SetElevatorPosition(floorInstanceArray[floorIndex].GetGatePoision(elevatorIndex));
     }
 
     private void CreateElevator()
@@ -44,6 +47,7 @@ public class GVallyPlaza : MonoBehaviour
             objTransform.localScale = Vector3.one;
             objTransform.name = string.Format("{0}Unit", i + 1);
             elevatorArr[i] = objTransform;
+            elevatorInstanceArray[i] = objTransform.GetComponent<Elevator>();
         }
     }
 
@@ -60,6 +64,17 @@ public class GVallyPlaza : MonoBehaviour
 
             floorInstanceArray[i] = objTransform.GetComponent<Floor>();
             floorInstanceArray[i].InitializeFloor();
+        }
+    }
+
+    private void ElevatorOperation()
+    {
+        Vector3 targetPos = Vector3.zero;
+
+        for(int i=0; i<elevatorInstanceArray.Length; i++)
+        {
+            targetPos = floorInstanceArray[19].GetGateWorldPosition(i);
+            elevatorInstanceArray[i].MoveToDestination(targetPos);
         }
     }
 }
