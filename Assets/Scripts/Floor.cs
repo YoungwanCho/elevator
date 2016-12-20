@@ -5,64 +5,37 @@ using UnityEngine;
 public class Floor : MonoBehaviour
 {
     public Transform gateParent_ = null;
+
     public GameObject[] gateObject = null;
     public Vector3[] gatePosition = null;
     public Vector3[] gateWorldPostion = null;
-
-    private const float gatePositionZmax = 4.0f;
-    private const float gatePositionZmin = -4.0f;
-    private const float gatePositionXleft = -5.5f;
-    private const float gatePositionXright = 5.5f;
-
-    private const int MAX_GATE_COUNT = 8;
-
-    public Vector3 GetGatePoision(int gateIndex)
-    {
-        return gatePosition[gateIndex];
-    }
-
+    
     public Vector3 GetGateWorldPosition(int gateIndex)
     {
         return gateWorldPostion[gateIndex];
     }
 
-    public void InitializeFloor()
+    public void InitializeFloor(Vector3[] gatePosArr)
     {
-        gateObject = new GameObject[MAX_GATE_COUNT];
-        gatePosition = new Vector3[MAX_GATE_COUNT];
-        gateWorldPostion = new Vector3[MAX_GATE_COUNT];
-        
-        CreateGateObject();
+        CreateGateObject(gatePosArr);
     }
 
-    private void CreateGateObject()
-    {        
-        for (int i = 0; i < MAX_GATE_COUNT; i++)
+    private void CreateGateObject(Vector3[] gatePosArr)
+    {
+        gateObject = new GameObject[GVallyPlaza.MAX_GATE_COUNT];
+        gatePosition = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
+        gateWorldPostion = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
+        GameObject baseGatePrefab = Resources.Load<GameObject>("Prefabs/Gate");
+        for (int i = 0; i < GVallyPlaza.MAX_GATE_COUNT; i++)
         {
-            gateObject[i] = new GameObject();
-            gateObject[i].transform.parent = gateParent_;
-            gatePosition[i] = this.CalculateGateLocalPosition(i);
-            gateObject[i].transform.localPosition = gatePosition[i];
-            gateWorldPostion[i] = gateObject[i].transform.position;
+            gateObject[i] = GameObject.Instantiate<GameObject>(baseGatePrefab, gateParent_) as GameObject; // Instantiate에서 하번에 초기화 할려했더니 로컬||월드 포지션구분이 안됨, 아마도 월드포지션 초기화를 하는것 같음
+            gateObject[i].transform.localPosition = gatePosArr[i];
             gateObject[i].transform.localRotation = Quaternion.identity;
-            gateObject[i].transform.localScale = Vector3.one;
+            gateObject[i].transform.localScale = new Vector3(0.2f, 1.0f, 1.0f);
+            gateWorldPostion[i] = gateObject[i].transform.position;
             gateObject[i].name = string.Format("{0}Gate", i + 1);
         }
     }	
 
-    private Vector3 CalculateGateLocalPosition(int gateIndex)
-    {
-        float xPos = 0.0f;
-        float yPos = 0.0f;
-        float zPos = 0.0f;
-        int halfCount = MAX_GATE_COUNT / 2;
-        int rowIndex = gateIndex % halfCount;
-        bool isLeft = (gateIndex < halfCount);
-        int rowInterval = 8 / halfCount; // TODO: 1호기와 4호기의 x값의 차이인데, 나중에 동적으로 구할수있도록 구현
 
-        xPos = isLeft ? gatePositionXleft : gatePositionXright;
-        zPos = gatePositionZmin + (rowIndex * rowInterval);
-
-        return new Vector3(xPos, yPos, zPos);
-    }
 }
