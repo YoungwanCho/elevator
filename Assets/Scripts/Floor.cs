@@ -7,6 +7,7 @@ public class Floor : MonoBehaviour
     public Transform gateParent_ = null;
 
     public GameObject[] gateObject = null;
+    public FloorGate[] gateInstanceArr = null;
     public Vector3[] gatePosition = null;
     public Vector3[] gateWorldPostion = null;
     
@@ -25,6 +26,8 @@ public class Floor : MonoBehaviour
         gateObject = new GameObject[GVallyPlaza.MAX_GATE_COUNT];
         gatePosition = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
         gateWorldPostion = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
+        gateInstanceArr = new FloorGate[GVallyPlaza.MAX_GATE_COUNT];
+
         GameObject baseGatePrefab = Resources.Load<GameObject>("Prefabs/Gate");
         for (int i = 0; i < GVallyPlaza.MAX_GATE_COUNT; i++)
         {
@@ -34,8 +37,7 @@ public class Floor : MonoBehaviour
             gateObject[i].transform.localScale = new Vector3(0.2f, 1.0f, 1.0f);
             gateWorldPostion[i] = gateObject[i].transform.position;
             gateObject[i].name = string.Format("{0}Gate", i + 1);
+            gateInstanceArr[i] = gateObject[i].GetComponent<FloorGate>();
         }
-    }	
-
-
+    }
 }
