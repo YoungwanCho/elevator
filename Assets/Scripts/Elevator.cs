@@ -8,8 +8,8 @@ public class ElevatorCommand
     private Vector3 _direction = Vector3.zero;
     private System.Action<int, int> _callBack = null;
     private int _targetFloorIndex = 0;
-
-    
+    private List<Person> passengerList = new List<Person>(); // 탑승인원
+        
     public Vector3 TargetWorldPos { get { return this._targetWorldPos; } }
     public Vector3 Direction { get { return this._direction; } }
     public System.Action<int, int> CallBack { get { return this._callBack; } }
@@ -75,5 +75,46 @@ public class Elevator : MonoBehaviour
         else
             direction = Vector3.down;
         return direction;      
+    }
+
+    private void GateOperation()
+    {
+        //닫 힐건지 열린건지 판단
+    }
+
+    private IEnumerator GateOpen()
+    {
+        //TODO: 문이 열릴수 있는 조건 1. 포지션이 정확한가 2.엘레베이터는 확실히 정지한 상태인가?
+        Debug.Log(string.Format("문이 닫힙니다."));
+        yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
+        Debug.Log(string.Format("철컥(닫힘)사운드"));
+    }
+
+    private IEnumerator GateClose()
+    {
+        //TODO: 문이 닫힐수 있는 조건 1.초과탑승이지 않는가? 2.게이트센서에 걸리지 않는가?
+        Debug.Log(string.Format("문이 닫힙니다."));
+        yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
+        Debug.Log(string.Format("철컥(닫힘)사운드"));
+    }
+
+    private bool CheckWeightCapacity()
+    {
+        return true;
+    }
+
+    private void GetInPerson(Person person)
+    {
+
+    }
+
+    private void GetOutPerson(Person person)
+    {
+
+    }
+
+    private bool GoodFitDocking()
+    {
+        return true;
     }
 }

@@ -16,6 +16,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     public const int MAX_FLOOR_COUNT = 20;
     public const int MAX_GATE_COUNT = 8;
     public const int MAX_ELEVATOR_COUNT = 8;
+    public static WaitForSeconds GateOperationSec = null; //@TODO: 초단위가 아니라 실제 움직이 필요한 시간을 계산하는 방식으로 수정
 
     private const float GATE_POS_Z_MAX = 4.0f;
     private const float GATE_POS_Z_MIN = -4.0f;
@@ -24,6 +25,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     public void Start()
     {
+        GateOperationSec = new WaitForSeconds(2.0f);  
         BuildingPlaza();
 
         ElevatorOperation();
@@ -40,6 +42,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             Debug.Log(string.Format("{0}호기 : 목표층 좌표 : {1}", i, targetPos));
             elevatorInstanceArr[i].MoveToDestination(targetFloorIndex, targetPos, this.CallBackOperationEnd);
         }
+        Debug.Log(string.Format("ElevatorOperation"));
     }
 
     public void CallBackOperationEnd(int elevatorIndex, int currentFloor)
