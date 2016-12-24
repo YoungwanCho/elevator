@@ -28,7 +28,7 @@ public class Floor : MonoBehaviour
         gateWorldPostion = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
         gateInstanceArr = new FloorGate[GVallyPlaza.MAX_GATE_COUNT];
 
-        GameObject baseGatePrefab = Resources.Load<GameObject>("Prefabs/Gate");
+        GameObject baseGatePrefab = Resources.Load<GameObject>("Prefabs/FloorGate");
         for (int i = 0; i < GVallyPlaza.MAX_GATE_COUNT; i++)
         {
             gateObject[i] = GameObject.Instantiate<GameObject>(baseGatePrefab, gateParent_) as GameObject; // Instantiate에서 하번에 초기화 할려했더니 로컬||월드 포지션구분이 안됨, 아마도 월드포지션 초기화를 하는것 같음
