@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FloorGate : MonoBehaviour
+public class FloorGate : MonoBehaviour, ElevatorObserver
 {
     public int gateIndex = 0;
 
@@ -38,6 +38,11 @@ public class FloorGate : MonoBehaviour
     public IEnumerator FlickerIndicatorLightDown()
     {
         yield return null;
+    }
+
+    public void UpdateIndigator(int currentElevatorLocation)
+    {
+
     }
 
     public void UpdateIndicatorElevatorLocation(int locationValue)

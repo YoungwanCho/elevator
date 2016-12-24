@@ -9,7 +9,7 @@ public class ElevatorCommand
     private System.Action<int, int> _callBack = null;
     private int _targetFloorIndex = 0;
     private List<Person> passengerList = new List<Person>(); // 탑승인원
-        
+ 
     public Vector3 TargetWorldPos { get { return this._targetWorldPos; } }
     public Vector3 Direction { get { return this._direction; } }
     public System.Action<int, int> CallBack { get { return this._callBack; } }
@@ -28,7 +28,7 @@ public class Elevator : MonoBehaviour
 {
     private enum eState {STANDBY = 0, STOP = 1, UP = 2, DOWN = 3};
     private eState _state = eState.STANDBY;
-
+    private List<ElevatorObserver> observerList = new List<ElevatorObserver>();
     private int elevatorIndex;
     private int operationCount = 0;
 
@@ -36,6 +36,22 @@ public class Elevator : MonoBehaviour
     {
         this.elevatorIndex = index;
         Debug.Log(string.Format("엘레베이터 생성 인덱스 할당 : {0}호기", index));
+    }
+
+    public void RegisterObserver(ElevatorObserver o)
+    {
+        observerList.Add(o);
+    }
+
+    public void UnregisterObserver(ElevatorObserver o)
+    {
+        observerList.Remove(o);
+    }
+
+    public void UpdateElevatorInfo()
+    {
+        for (int i = 0; i < observerList.Count; i++)
+            observerList[i].UpdateIndigator(0);
     }
 
     public void MoveToDestination(int targetFloorIndex, Vector3 targetPos, System.Action<int, int> callBack)
