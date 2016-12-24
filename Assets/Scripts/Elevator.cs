@@ -35,7 +35,7 @@ public class Elevator : MonoBehaviour
     public void SetElevator(int index)
     {
         this.elevatorIndex = index;
-        Debug.Log(string.Format("엘레베이터 생성 인덱스 할당 : {0}호기", index));
+        //Debug.Log(string.Format("엘레베이터 생성 인덱스 할당 : {0}호기", index));
     }
 
     public void RegisterObserver(ElevatorObserver o)
@@ -57,8 +57,6 @@ public class Elevator : MonoBehaviour
     public void MoveToDestination(int targetFloorIndex, Vector3 targetPos, System.Action<int, int> callBack)
     {
         Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this.elevatorIndex, targetFloorIndex, operationCount));   
-
-
         Vector3 direction = this.GetDirectionToGo(this.transform.position, targetPos);
         ElevatorCommand command = new ElevatorCommand(targetFloorIndex, targetPos, direction, callBack);
         IEnumerator coroutine = null;
@@ -77,6 +75,10 @@ public class Elevator : MonoBehaviour
             this.transform.Translate(command.Direction * Time.deltaTime);
             yield return null;
         } while (dist >= 0.1f);
+
+        yield return StartCoroutine("GateOpen");
+        //yield  StartCoroutine("GateClose");
+
         operationCount++;
         this.transform.position = command.TargetWorldPos;
         if (command.CallBack != null)
@@ -93,25 +95,26 @@ public class Elevator : MonoBehaviour
         return direction;      
     }
 
-    private void GateOperation()
-    {
-        //닫 힐건지 열린건지 판단
-    }
-
     private IEnumerator GateOpen()
     {
         //TODO: 문이 열릴수 있는 조건 1. 포지션이 정확한가 2.엘레베이터는 확실히 정지한 상태인가?
-        Debug.Log(string.Format("문이 닫힙니다."));
+        Debug.Log(string.Format("{0}호기 : 문이 열립니다.", elevatorIndex));
         yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
-        Debug.Log(string.Format("철컥(닫힘)사운드"));
+        yield return WaitForTheGateToOpen();
+    }
+
+    private IEnumerator WaitForTheGateToOpen()
+    {
+        Debug.Log(string.Format("{0}호기 : 문이 열린후 대기합니다", elevatorIndex));
+        yield return GVallyPlaza.WaitForTheDoorToOpenSec;
+        yield return GateClose();
     }
 
     private IEnumerator GateClose()
     {
         //TODO: 문이 닫힐수 있는 조건 1.초과탑승이지 않는가? 2.게이트센서에 걸리지 않는가?
-        Debug.Log(string.Format("문이 닫힙니다."));
+        Debug.Log(string.Format("{0}호기 : 문이 닫힙니다.", elevatorIndex));
         yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
-        Debug.Log(string.Format("철컥(닫힘)사운드"));
     }
 
     private bool CheckWeightCapacity()
