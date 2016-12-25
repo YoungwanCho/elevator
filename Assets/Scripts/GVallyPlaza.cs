@@ -24,6 +24,8 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     private const float GATE_POS_X_MAX = 5.5f;
     private const float GATE_POS_X_MIN = -5.5f;
 
+    private int tempIndex = 0; // 엘레베이터 목표층 테스트 용도 쓰고 지움 
+
     public void Start()
     {
         GateOperationSec = new WaitForSeconds(1.0f);
@@ -32,10 +34,10 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
         ElevatorOperation();
     }
-        
+
     private void ElevatorOperation()
     {
-        int targetFloorIndex = Random.RandomRange(0, 20);
+        int targetFloorIndex = (++tempIndex % 2 == 0) ? 0 : 19;
         Vector3 targetPos = Vector3.zero;
 
         for (int i = 0; i < elevatorInstanceArr.Length; i++)
@@ -51,12 +53,12 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     public void CallBackOperationEnd(int elevatorIndex, int currentFloor)
     {
-        int targetFloorValue = Random.RandomRange(0, 20); // 현재층을 제외하고 랜덤 값을 뽑을수 있도록 수정 
+        int targetFloorValue = (++tempIndex % 2 == 0) ? 0 : 19; ; // 현재층을 제외하고 랜덤 값을 뽑을수 있도록 수정 
 
         Vector3 targetPos = floorInstanceArr[targetFloorValue].GetGateWorldPosition(elevatorIndex);
         elevatorInstanceArr[elevatorIndex].MoveToDestination(targetFloorValue, targetPos, this.CallBackOperationEnd);
     }
-    
+
 #region BuildGvallyPlaza
     /*
      * @brief 20개의 층, 8개의 엘레베이터 객체를 만든다.
