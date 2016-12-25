@@ -15,12 +15,22 @@ public class ElevatorCommand
     public System.Action<int, int> CallBack { get { return this._callBack; } }
     public int TargetFloorIndex { get { return _targetFloorIndex; } }
 
-    public ElevatorCommand(int targetFloorIndex, Vector3 targetWorldPos, Vector3 direction, System.Action<int, int> callBack)
+    public ElevatorCommand(int targetFloorIndex,Vector3 startWorldPos, Vector3 targetWorldPos, System.Action<int, int> callBack)
     {
         this._targetFloorIndex = targetFloorIndex;
         this._targetWorldPos = targetWorldPos;
-        this._direction = direction;
+        this._direction = this.GetDirectionToGo(startWorldPos, targetWorldPos);
         this._callBack = callBack;
+    }
+
+    private Vector3 GetDirectionToGo(Vector3 selfWorldPos, Vector3 targetWorldPos)
+    {
+        Vector3 direction = Vector3.zero;
+        if (selfWorldPos.y < targetWorldPos.y)
+            direction = Vector3.up;
+        else
+            direction = Vector3.down;
+        return direction;
     }
 }
 
@@ -57,8 +67,7 @@ public class Elevator : MonoBehaviour
     public void MoveToDestination(int targetFloorIndex, Vector3 targetPos, System.Action<int, int> callBack)
     {
         Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this.elevatorIndex, targetFloorIndex, operationCount));   
-        Vector3 direction = this.GetDirectionToGo(this.transform.position, targetPos);
-        ElevatorCommand command = new ElevatorCommand(targetFloorIndex, targetPos, direction, callBack);
+        ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform.position, targetPos, callBack);
         IEnumerator coroutine = null;
         coroutine = Moving(command);
         StopCoroutine(coroutine);
@@ -83,16 +92,6 @@ public class Elevator : MonoBehaviour
         this.transform.position = command.TargetWorldPos;
         if (command.CallBack != null)
             command.CallBack(elevatorIndex, command.TargetFloorIndex);
-    }
-    
-    private Vector3 GetDirectionToGo(Vector3 selfWorldPos, Vector3 targetWorldPos)
-    {
-        Vector3 direction = Vector3.zero;
-        if (selfWorldPos.y < targetWorldPos.y)
-            direction = Vector3.up;
-        else
-            direction = Vector3.down;
-        return direction;      
     }
 
     private IEnumerator GateOpen()
