@@ -81,7 +81,7 @@ public class Elevator : MonoBehaviour
         do
         {
             dist = Vector3.Distance(this.transform.position, command.TargetWorldPos);
-            this.transform.Translate(command.Direction * Time.deltaTime);
+            this.transform.Translate(command.Direction * Time.deltaTime * GVallyPlaza.ELEVATOR_SPEED);
             yield return null;
         } while (dist >= 0.1f);
 

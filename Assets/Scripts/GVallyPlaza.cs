@@ -16,6 +16,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     public const int MAX_FLOOR_COUNT = 20;
     public const int MAX_GATE_COUNT = 8;
     public const int MAX_ELEVATOR_COUNT = 8;
+    public const float ELEVATOR_SPEED = 2;
     public static WaitForSeconds GateOperationSec = null; //@TODO: 초단위가 아니라 실제 움직이 필요한 시간을 계산하는 방식으로 수정
     public static WaitForSeconds WaitForTheDoorToOpenSec = null;
 
@@ -24,7 +25,6 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     private const float GATE_POS_X_MAX = 5.5f;
     private const float GATE_POS_X_MIN = -5.5f;
 
-    private int tempIndex = 0; // 엘레베이터 목표층 테스트 용도 쓰고 지움 
 
     public void Start()
     {
@@ -37,14 +37,11 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     private void ElevatorOperation()
     {
-        int targetFloorIndex = (++tempIndex % 2 == 0) ? 0 : 19;
+        int targetFloorIndex = Random.RandomRange(0, 20);
         Vector3 targetPos = Vector3.zero;
 
         for (int i = 0; i < elevatorInstanceArr.Length; i++)
         {
-            if (i != 0) //엘레베이터 하나만 테스트 해보기 위해 
-                continue;
-
             targetPos = floorInstanceArr[targetFloorIndex].GetGateWorldPosition(i);
             elevatorInstanceArr[i].MoveToDestination(targetFloorIndex, targetPos, this.CallBackOperationEnd);
         }
@@ -53,7 +50,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     public void CallBackOperationEnd(int elevatorIndex, int currentFloor)
     {
-        int targetFloorValue = (++tempIndex % 2 == 0) ? 0 : 19; ; // 현재층을 제외하고 랜덤 값을 뽑을수 있도록 수정 
+        int targetFloorValue = Random.RandomRange(0, 20);
 
         Vector3 targetPos = floorInstanceArr[targetFloorValue].GetGateWorldPosition(elevatorIndex);
         elevatorInstanceArr[elevatorIndex].MoveToDestination(targetFloorValue, targetPos, this.CallBackOperationEnd);
