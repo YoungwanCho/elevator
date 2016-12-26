@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-public class ControlCenter
+public class CentralControlCenter
 {
 }
