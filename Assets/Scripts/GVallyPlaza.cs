@@ -56,6 +56,21 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         elevatorInstanceArr[elevatorIndex].MoveToDestination(targetFloorValue, targetPos, this.CallBackOperationEnd);
     }
 
+    public List<int> GetMovableFloorList(int currentFloor)
+    {
+        //TODO: 나중에 저층부 고층부 모드를 나눠야 함
+        List<int> list = new List<int>();
+
+        for (int i = 0; i < floorInstanceArr.Length; i++)
+        {
+            if (i == currentFloor)
+                continue;
+
+            list.Add(i);
+        }
+        return list;
+    }
+
 #region BuildGvallyPlaza
     /*
      * @brief 20개의 층, 8개의 엘레베이터 객체를 만든다.

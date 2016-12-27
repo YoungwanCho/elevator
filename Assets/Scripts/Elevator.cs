@@ -36,7 +36,7 @@ public class ElevatorCommand
 
 public class Elevator : MonoBehaviour
 {
-    private enum eState {STANDBY = 0, STOP = 1, UP = 2, DOWN = 3};
+    private enum eState {STANDBY = 0, STOP = 1, UP = 2, DOWN = 3}; // 1.대기, 2.정지(층에정차), 3.올라감, 4.내려감
     private eState _state = eState.STANDBY;
     private List<ElevatorObserver> observerList = new List<ElevatorObserver>();
     private int elevatorIndex;

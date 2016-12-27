@@ -10,7 +10,45 @@ public class Floor : MonoBehaviour
     public FloorGate[] gateInstanceArr = null;
     public Vector3[] gatePosition = null;
     public Vector3[] gateWorldPostion = null;
-    
+
+    private List<Person> onTheFloorPersonList = new List<Person>();
+    private List<Person> waitingDownPersonList = new List<Person>();
+    private List<Person> waitingUpPersonList = new List<Person>();
+
+    public void GetinFloorPerson(Person person)
+    {
+        onTheFloorPersonList.Add(person);
+    }
+
+    public void GetOutFloorPerson(Person person)
+    {
+        if (onTheFloorPersonList.Contains(person))
+        {
+            Debug.Log("현재 층에 존재 하지 않는 사람이 탈출을 시도합니다.");
+            return;
+        }
+
+        switch (person.State)
+        {
+            case PERSON_STATE.WANT_DOWN:
+                waitingDownPersonList.Add(person);
+                break;
+            case PERSON_STATE.WANT_UP:
+                waitingUpPersonList.Add(person);
+                break;
+        }
+    }
+
+    public void ElevatorArrives(Elevator elevator)
+    {
+        /*
+         * @TODO:
+         * 0.엘레베이터 안에서 내려야할 인원이 있으면 내린다 내릴 인원 리스트로 받고
+         * 1.엘레베이터의 방향에 따라
+         * 2.승차가능한 인원만큼 대기자들을 타고(리스트로 넘기고) 출발
+         * */        
+    }
+ 
     public Vector3 GetGateWorldPosition(int gateIndex)
     {
         return gateWorldPostion[gateIndex];
@@ -19,6 +57,9 @@ public class Floor : MonoBehaviour
     public void InitializeFloor(Vector3[] gatePosArr)
     {
         CreateGateObject(gatePosArr);
+        onTheFloorPersonList.Clear();
+        waitingDownPersonList.Clear();
+        waitingUpPersonList.Clear();
     }
 
     private void CreateGateObject(Vector3[] gatePosArr)
