@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PERSON_STATE {TASK = 0, ,WANT_UP, WANT_DOWN} //@Description 0 = 해당층에서 일을 보는중, 1 = 올라가고 싶다, 2 = 내려가고 싶다
+public enum PERSON_STATE {TASK = 0, WANT_UP, WANT_DOWN} //@Description 0 = 해당층에서 일을 보는중, 1 = 올라가고 싶다, 2 = 내려가고 싶다
 
 public class Person : MonoBehaviour
 {

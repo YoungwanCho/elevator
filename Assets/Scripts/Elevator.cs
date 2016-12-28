@@ -8,7 +8,7 @@ public class ElevatorCommand
     private Vector3 _direction = Vector3.zero;
     private System.Action<int, int> _callBack = null;
     private int _targetFloorIndex = 0;
-    private List<Person> passengerList = new List<Person>(); // 탑승인원
+    private List<Person> boardedPersonList = new List<Person>(); // 탑승인원
  
     public Vector3 TargetWorldPos { get { return this._targetWorldPos; } }
     public Vector3 Direction { get { return this._direction; } }
@@ -47,7 +47,7 @@ public class Elevator : MonoBehaviour
         this.elevatorIndex = index;
         //Debug.Log(string.Format("엘레베이터 생성 인덱스 할당 : {0}호기", index));
     }
-
+    #region observer
     public void RegisterObserver(ElevatorObserver o)
     {
         observerList.Add(o);
@@ -63,6 +63,7 @@ public class Elevator : MonoBehaviour
         for (int i = 0; i < observerList.Count; i++)
             observerList[i].UpdateIndigator(0);
     }
+    #endregion
 
     public void MoveToDestination(int targetFloorIndex, Vector3 targetPos, System.Action<int, int> callBack)
     {
@@ -86,7 +87,7 @@ public class Elevator : MonoBehaviour
         } while (dist >= 0.1f);
 
         yield return StartCoroutine("GateOpen");
-        //yield  StartCoroutine("GateClose");
+        //yield return StartCoroutine("GateClose");
 
         operationCount++;
         this.transform.position = command.TargetWorldPos;
@@ -99,7 +100,7 @@ public class Elevator : MonoBehaviour
         //TODO: 문이 열릴수 있는 조건 1. 포지션이 정확한가 2.엘레베이터는 확실히 정지한 상태인가?
         Debug.Log(string.Format("{0}호기 : 문이 열립니다.", elevatorIndex));
         yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
-        yield return WaitForTheGateToOpen();
+        //yield return WaitForTheGateToOpen();
     }
 
     private IEnumerator WaitForTheGateToOpen()
@@ -116,19 +117,61 @@ public class Elevator : MonoBehaviour
         yield return GVallyPlaza.GateOperationSec; // 시간으로 계산하기보다는 실제 닫히걸 계산 해줘야 한다, 닫히다가 열리는경우도 있기에 일단 시간으로
     }
 
-    private bool CheckWeightCapacity()
+    /* @brief 실제 층에서 엘레베이터에 탑승하는 기능 구현 
+     */
+    private IEnumerator GetInPerson(List<Person> boardedList, List<Person> inList, int limitCount)
     {
-        return true;
+        int acceptableCount = limitCount - boardedList.Count;
+
+        for (int i = 0; i < acceptableCount &&  i < inList.Count; i++)
+        {
+            boardedList.Add(inList[i]);
+            yield return new WaitForSeconds(0.15f);
+        }         
     }
 
-    private void GetInPerson(Person person)
+    /* @brief 실제 탑승인원 목록에서 내릴 사람들을 빼주고 사람들이 내리는 시간을 지연시켜줌
+     */
+    private IEnumerator GetOutPerson(List<Person>boardedList, List<Person> outList)
     {
-
+        for (int i = 0; i < outList.Count; i++)
+        {
+            if(boardedList.Contains(outList[i]))
+            {
+                boardedList.Remove(outList[i]);
+                yield return new WaitForSeconds(0.15f);
+            }            
+        }
     }
 
-    private void GetOutPerson(Person person)
-    {
 
+    /* @brief 엘레베이터에 탑승한 인원 중 현재 층에서 내릴 인원 리스트를 반환
+     */
+    private List<Person> GetOutPersonList(List<Person> boardedList, int outFloorValue)
+    {
+        List<Person> outList = new List<Person>();
+
+        for(int i=0; i<boardedList.Count; i++)
+        {
+            if (outFloorValue == boardedList[i].TargetFloor)
+                outList.Add(boardedList[i]);
+        }
+        return outList;
+    }
+
+    /* @brief 현재층에서 엘레베이터에 탑승할 인원 리스트를 반환
+     * @Param (엘레베이터에 탑승해있는 인원리스트, 층에 탑승을 희망하는 인원, 엘레베이터의 최대 탑승인원)
+     */
+    private List<Person> GetInPersonList(List<Person> boardedList, List<Person> boardingList, int limitCount)
+    {
+        List<Person> inList = new List<Person>();
+        int acceptableCount = limitCount - boardedList.Count;
+       
+        for(int i=0; i<acceptableCount; i++)
+        {
+            inList.Add(boardingList[i]);
+        }
+        return inList;
     }
 
     private bool GoodFitDocking()
