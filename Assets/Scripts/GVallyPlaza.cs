@@ -7,15 +7,15 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     public Transform floorParent_ = null;
     public Transform elevatorParent_ = null;
 
-    private Floor[] floorInstanceArr = new Floor[MAX_FLOOR_COUNT];
-    private Elevator[] elevatorInstanceArr = new Elevator[MAX_ELEVATOR_COUNT];
+    private Floor[] floorComponentArr = new Floor[MAX_FLOOR_COUNT];
+    private Elevator[] elevatorComponentArr = new Elevator[MAX_ELEVATOR_COUNT];
     private Vector3[] gateFixedPos = new Vector3[MAX_GATE_COUNT];
     private float[] floorHeightArr = new float[MAX_FLOOR_COUNT];
 
     public const int FLOOR_HEIGHT_INTERVAL = 1;
     public const int MAX_FLOOR_COUNT = 20;
     public const int MAX_GATE_COUNT = 8;
-    public const int MAX_ELEVATOR_COUNT = 8;
+    public const int MAX_ELEVATOR_COUNT = 1;
     public const float ELEVATOR_SPEED = 2;
     public static WaitForSeconds GateOperationSec = null; //@TODO: 초단위가 아니라 실제 움직이 필요한 시간을 계산하는 방식으로 수정
     public static WaitForSeconds WaitForTheDoorToOpenSec = null;
@@ -31,37 +31,33 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         GateOperationSec = new WaitForSeconds(1.0f);
         WaitForTheDoorToOpenSec = new WaitForSeconds(2.0f);
         BuildingPlaza();
-
-        ElevatorOperation();
     }
 
-    private void ElevatorOperation()
+    public int OperationElevator(int floorIndex)
     {
-        int targetFloorIndex = Random.RandomRange(0, 20);
-        Vector3 targetPos = Vector3.zero;
+        int elevatorIndex = 0;
 
-        for (int i = 0; i < elevatorInstanceArr.Length; i++)
-        {
-            targetPos = floorInstanceArr[targetFloorIndex].GetGateWorldPosition(i);
-            elevatorInstanceArr[i].MoveToDestination(targetFloorIndex, targetPos, this.CallBackOperationEnd);
-        }
-        Debug.Log(string.Format("ElevatorOperationEnd"));
+        // 엘레베이터 오퍼레이팅 명령
+
+        elevatorComponentArr[elevatorIndex].OrderedToWork(floorIndex);
+
+
+        return elevatorIndex;
     }
 
-    public void CallBackOperationEnd(int elevatorIndex, int currentFloor)
+    public Floor GetFloorComponent(int floorIndex)
     {
-        int targetFloorValue = Random.RandomRange(0, 20);
-
-        Vector3 targetPos = floorInstanceArr[targetFloorValue].GetGateWorldPosition(elevatorIndex);
-        elevatorInstanceArr[elevatorIndex].MoveToDestination(targetFloorValue, targetPos, this.CallBackOperationEnd);
+        return floorComponentArr[floorIndex];
     }
 
+    /*@breif 현재 층을 제외한 갈수 있는 층의 리스트를 전달함
+     */
     public List<int> GetMovableFloorList(int currentFloor)
     {
         //TODO: 나중에 저층부 고층부 모드를 나눠야 함
         List<int> list = new List<int>();
 
-        for (int i = 0; i < floorInstanceArr.Length; i++)
+        for (int i = 0; i < floorComponentArr.Length; i++)
         {
             if (i == currentFloor)
                 continue;
@@ -85,17 +81,10 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     private void CreateElevator()
     {
-        GameObject baseElevatorPrefab = Resources.Load<GameObject>("Prefabs/Elevator");
         for (int i = 0; i < MAX_ELEVATOR_COUNT; i++)
         {
-            Transform objTransform = GameObject.Instantiate<GameObject>(baseElevatorPrefab).transform;
-            objTransform.parent = elevatorParent_;
-            objTransform.localPosition = gateFixedPos[i];
-            objTransform.localRotation = Quaternion.identity;
-            objTransform.localScale = Vector3.one;
-            objTransform.name = string.Format("{0}Unit", i + 1);
-            elevatorInstanceArr[i] = objTransform.GetComponent<Elevator>();
-            elevatorInstanceArr[i].SetElevator(i);
+            elevatorComponentArr[i] = FactoryBehavior.Instantiate<Elevator>("Prefabs/Elevator", elevatorParent_, gateFixedPos[i], Quaternion.identity, Vector3.one, string.Format("{0}Unit", i + 1));
+            elevatorComponentArr[i].Initialize(i);
         }
     }
 
@@ -104,10 +93,8 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         GameObject baseFloorPrefab = Resources.Load<GameObject>("Prefabs/Floor");
         for (int i = 0; i < MAX_FLOOR_COUNT; i++)
         {
-            Transform objTransform = GameObject.Instantiate<GameObject>(baseFloorPrefab, new Vector3(0.0f, floorHeightArr[i], 0.0f), Quaternion.identity, floorParent_).transform;
-            objTransform.name = string.Format("{0}F", i + 1);
-            floorInstanceArr[i] = objTransform.GetComponent<Floor>();
-            floorInstanceArr[i].InitializeFloor(gateFixedPos);
+            floorComponentArr[i] = FactoryBehavior.Instantiate<Floor>("Prefabs/Floor", floorParent_, new Vector3(0.0f, floorHeightArr[i], 0.0f), Quaternion.identity, Vector3.one, string.Format("{0}F", i));
+            floorComponentArr[i].Initialize(gateFixedPos, i);
         }
     }
 

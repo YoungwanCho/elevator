@@ -4,23 +4,94 @@ using UnityEngine;
 
 public class Floor : MonoBehaviour
 {
+    public List<Person> WaitingDownList { get { return waitingDownPersonList; } }
+    public List<Person> WaitingUpList { get { return waitingUpPersonList; } }
+    public int FloorIndex { get { return _floorIndex; } }
+
     public Transform gateParent_ = null;
+    public Transform waittingLine_ = null;
 
-    public GameObject[] gateObject = null;
-    public FloorGate[] gateInstanceArr = null;
-    public Vector3[] gatePosition = null;
-    public Vector3[] gateWorldPostion = null;
+    public FloorGate[] gateComponentArr = null;
+    public Vector3[] gatePositionArr = null;
+    public Vector3[] gateWorldPostionArr = null;
 
+    private List<FloorObserver> observerList = new List<FloorObserver>();
     private List<Person> onTheFloorPersonList = new List<Person>();
     private List<Person> waitingDownPersonList = new List<Person>();
     private List<Person> waitingUpPersonList = new List<Person>();
 
-    public void GetinFloorPerson(Person person)
+    private int _floorIndex = 0;
+
+    public void Initialize(Vector3[] gatePosArr, int floorIndex)
     {
-        onTheFloorPersonList.Add(person);
+        this._floorIndex = floorIndex;
+        CreateGateObject(gatePosArr);
+        CreatePerson();
+        onTheFloorPersonList.Clear();
+        waitingDownPersonList.Clear();
+        waitingUpPersonList.Clear();
     }
 
-    public void GetOutFloorPerson(Person person)
+    #region observer
+    public void RegisterObserver(FloorObserver o)
+    {
+        observerList.Add(o);
+    }
+
+    public void UnregisterObserver(FloorObserver o)
+    {
+        observerList.Remove(o);
+    }
+
+    public void UpdateButtonUp(bool isOn)
+    {
+        for (int i = 0; i < observerList.Count; i++)
+            observerList[i].UpdateButtonUp(isOn); // bool값 판단해줄것
+    }
+
+    public void UpdateButtonDown(bool isOn)
+    {
+        for (int i = 0; i < observerList.Count; i++)
+            observerList[i].UpdateButtonUp(isOn);
+    }
+    #endregion
+
+    /* @brief
+ * 엘레베이터가 도착하면 호출될 함수
+ */
+    public void ElevatorArrives(Elevator elevator)
+    {
+        /*
+         * @TODO:
+         * 0.엘레베이터 안에서 내려야할 인원이 있으면 내린다 내릴 인원 리스트로 받고
+         * 1.엘레베이터의 방향에 따라
+         * 2.승차가능한 인원만큼 대기자들을 타고(리스트로 넘기고) 출발
+         * */
+    }
+
+    public void EnterFloorPerson(Person person)
+    {
+        onTheFloorPersonList.Add(person);
+        Debug.Log(string.Format("{0}이 {1}층에 들어왔습니다.", person.Name, this.FloorIndex));
+        UpdateWaitingLine();
+    }
+
+    public void ExitFloorPerson(Person person)
+    {
+        if(person.State == PERSON_STATE.WANT_DOWN)
+        {
+            waitingDownPersonList.Remove(person);
+        }
+        else if( person.State == PERSON_STATE.WANT_UP)
+        {
+            waitingUpPersonList.Remove(person);
+        }
+        onTheFloorPersonList.Remove(person);
+        Debug.Log(string.Format("{0}이 {1}층에서 나갔습니다.", person.Name, this.FloorIndex));
+        UpdateWaitingLine();
+    }
+
+    public void WantExitFloorPerson(Person person)
     {
         if (onTheFloorPersonList.Contains(person))
         {
@@ -37,48 +108,69 @@ public class Floor : MonoBehaviour
                 waitingUpPersonList.Add(person);
                 break;
         }
+
+        CallingElevator();
     }
 
-    public void ElevatorArrives(Elevator elevator)
+    private void CallingElevator()
     {
-        /*
-         * @TODO:
-         * 0.엘레베이터 안에서 내려야할 인원이 있으면 내린다 내릴 인원 리스트로 받고
-         * 1.엘레베이터의 방향에 따라
-         * 2.승차가능한 인원만큼 대기자들을 타고(리스트로 넘기고) 출발
-         * */        
+        for(int i=0; i<waitingDownPersonList.Count; i++)
+        {
+            int targetFloorIndex = waitingDownPersonList[i].TargetFloor;
+            Debug.Log(string.Format("{0}층에서 {1}까지 까지 Down 오더를 넣었다", this._floorIndex, targetFloorIndex));
+            GVallyPlaza.Instance.OperationElevator(targetFloorIndex);
+
+        }
+
+        for(int i=0; i<waitingUpPersonList.Count; i++)
+        {
+            int targetFloorIndex = waitingUpPersonList[i].TargetFloor;
+            Debug.Log(string.Format("{0}층에서 {1}까지 까지 Up 오더를 넣었다", this._floorIndex, targetFloorIndex));
+            GVallyPlaza.Instance.OperationElevator(targetFloorIndex);
+ 
+        }
+    }
+
+    private void UpdateWaitingLine()
+    {
+        int waitlinecount = onTheFloorPersonList.Count;
+
+        for (int i = 0; i < waitlinecount; i++)
+        {
+            onTheFloorPersonList[i].transform.parent = waittingLine_;
+            onTheFloorPersonList[i].transform.localPosition = new Vector3(1 * i, 0.0f, 0.0f);
+        }
     }
  
     public Vector3 GetGateWorldPosition(int gateIndex)
     {
-        return gateWorldPostion[gateIndex];
-    }
-
-    public void InitializeFloor(Vector3[] gatePosArr)
-    {
-        CreateGateObject(gatePosArr);
-        onTheFloorPersonList.Clear();
-        waitingDownPersonList.Clear();
-        waitingUpPersonList.Clear();
+        return gateWorldPostionArr[gateIndex];
     }
 
     private void CreateGateObject(Vector3[] gatePosArr)
     {
-        gateObject = new GameObject[GVallyPlaza.MAX_GATE_COUNT];
-        gatePosition = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
-        gateWorldPostion = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
-        gateInstanceArr = new FloorGate[GVallyPlaza.MAX_GATE_COUNT];
-
-        GameObject baseGatePrefab = Resources.Load<GameObject>("Prefabs/FloorGate");
+        gatePositionArr = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
+        gateWorldPostionArr = new Vector3[GVallyPlaza.MAX_GATE_COUNT];
+        gateComponentArr = new FloorGate[GVallyPlaza.MAX_GATE_COUNT];
+        Vector3 gateScale = new Vector3(0.2f, 1.0f, 1.0f);
         for (int i = 0; i < GVallyPlaza.MAX_GATE_COUNT; i++)
         {
-            gateObject[i] = GameObject.Instantiate<GameObject>(baseGatePrefab, gateParent_) as GameObject; // Instantiate에서 하번에 초기화 할려했더니 로컬||월드 포지션구분이 안됨, 아마도 월드포지션 초기화를 하는것 같음
-            gateObject[i].transform.localPosition = gatePosArr[i];
-            gateObject[i].transform.localRotation = Quaternion.identity;
-            gateObject[i].transform.localScale = new Vector3(0.2f, 1.0f, 1.0f);
-            gateWorldPostion[i] = gateObject[i].transform.position;
-            gateObject[i].name = string.Format("{0}Gate", i + 1);
-            gateInstanceArr[i] = gateObject[i].GetComponent<FloorGate>();
+            gateComponentArr[i] = FactoryBehavior.Instantiate<FloorGate>("Prefabs/FloorGate", gateParent_, gatePosArr[i], Quaternion.identity, gateScale, string.Format("{0}Gate", i + 1));
+            gateComponentArr[i].Initialize(this, i);
+            gatePositionArr[i] = gateComponentArr[i].transform.localPosition;
+            gateWorldPostionArr[i] = gateComponentArr[i].transform.position;
+        }
+    }
+
+    private void CreatePerson()
+    {
+        Person personInstance = null;
+
+        for(int i=0; i<1; i++)
+        {
+            personInstance = FactoryBehavior.Instantiate<Person>("Prefabs/Person", null, Vector3.zero, Quaternion.identity, Vector3.one, string.Format("{0}층의 {1}번째 사람", _floorIndex, i));
+            personInstance.Initialize(i, this);
+            personInstance.EnterFloor(this);
         }
     }
 }

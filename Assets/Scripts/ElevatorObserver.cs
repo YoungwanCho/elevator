@@ -1,6 +1,4 @@
-﻿
-
-public interface ElevatorObserver
+﻿public interface ElevatorObserver
 {
     void UpdateIndigator(int currentFloorLocation);
 }

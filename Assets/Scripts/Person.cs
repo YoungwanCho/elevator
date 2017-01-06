@@ -8,28 +8,53 @@ public class Person : MonoBehaviour
 {
     public PERSON_STATE State{get {return this._state;} }
     public string Name {get {return this._name;} }
-    public int CurrentFloor{get {return this._currentFloor;} }
     public int TargetFloor{get {return this._targetFloor;} }
-    public int Weight {get {return this._weight;} }
+
 
     private PERSON_STATE _state = PERSON_STATE.TASK;
+    public Floor _currentFloorComponent = null;
     private string _name = string.Empty;
-    private int _currentFloor = 0;
     private int _targetFloor = 0;
-    private int _weight = 0;
 
-    public Person(int pIndex)
+    static int indexCount = 0;
+
+    public void Initialize(int personIndex, Floor currentFlootComponent)
     {
         this._state = PERSON_STATE.TASK;
-        this._name = string.Format("{0}번째사람", pIndex);
-        this._weight = Random.RandomRange(40, 100);
-        this._currentFloor = 0;
-        this._targetFloor = 0;        
+        this._name = string.Format("{0}번째사람", indexCount++);
+        this.gameObject.name = this._name;
+        this._targetFloor = 0;
+    }
+
+    public void UpdateFloorInstance(Floor currentFloor)
+    {
+        if (currentFloor != null)
+        {
+            this._currentFloorComponent = currentFloor;
+
+        }
+        else
+        {
+            this._currentFloorComponent = null;
+        }
+    }
+    
+    public void EnterFloor(Floor currentFloorComponent)
+    {
+        this.UpdateFloorInstance(currentFloorComponent);
+        currentFloorComponent.EnterFloorPerson(this);
+        Action();
+    }
+
+    public void ExitFloor(Floor currentFloorComponent)
+    {
+        currentFloorComponent.ExitFloorPerson(this);
+        UpdateFloorInstance(null);
     }
 
     private void Action()
     {
-        StartCoroutine(ArtificialIntelligence());
+        StartCoroutine("ArtificialIntelligence");
     }
 
     private IEnumerator ArtificialIntelligence()
@@ -40,9 +65,9 @@ public class Person : MonoBehaviour
                 yield return Task();
                 break;
             case PERSON_STATE.WANT_DOWN :
-                yield return null;
-                break;
             case PERSON_STATE.WANT_UP:
+                Debug.Log(string.Format("{0}번째 사람이 {1}층에서 {2}상태입니다.", this.Name,  this._currentFloorComponent.FloorIndex, this._state));
+                _currentFloorComponent.WantExitFloorPerson(this);
                 yield return null;
                 break;
         }        
@@ -50,7 +75,7 @@ public class Person : MonoBehaviour
 
     private IEnumerator Task()
     {
-        Debug.Log(string.Format("{0}은 {1}층에서 볼일을 보고 있다", this._name, this._currentFloor));
+        Debug.Log(string.Format("{0}은 {1}층에서 볼일을 보고 있다", this._name, this._currentFloorComponent.FloorIndex));
         yield return new WaitForSeconds(Random.Range(10, 20));
         this.WhereToGo();        
     }
@@ -60,15 +85,17 @@ public class Person : MonoBehaviour
         int randomIndex = 0;
         List<int> floorList = null;
 
-        floorList =  GVallyPlaza.Instance.GetMovableFloorList(this._currentFloor);
+        floorList =  GVallyPlaza.Instance.GetMovableFloorList(this._currentFloorComponent.FloorIndex);
         randomIndex = Random.Range(0, floorList.Count);
         
         this._targetFloor = floorList[randomIndex];
 
-        if(this._targetFloor > this._currentFloor)
+        if(this._targetFloor > this._currentFloorComponent.FloorIndex)
             this._state = PERSON_STATE.WANT_UP;
-        else if(this._targetFloor < this._currentFloor)
+        else if(this._targetFloor < this._currentFloorComponent.FloorIndex)
             this._state = PERSON_STATE.WANT_DOWN;
+
+        Action();
     }
 }
 
