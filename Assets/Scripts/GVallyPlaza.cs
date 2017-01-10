@@ -64,10 +64,10 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
         for (int i = 0; i < floorComponentArr.Length; i++)
         {
-            if (i == currentFloor)
+            if (floorComponentArr[i].FloorIndex == currentFloor)
                 continue;
 
-            list.Add(i);
+            list.Add(floorComponentArr[i].FloorIndex);
         }
         return list;
     }
