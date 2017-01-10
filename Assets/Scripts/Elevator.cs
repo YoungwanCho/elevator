@@ -76,9 +76,9 @@ public class Elevator : MonoBehaviour
     {
     }
 
-    int temp = 0;
     public void Update()
     {
+        this._currentFloorIndex = GVallyPlaza.Instance.GetFlootValueFromHeight(this.transform.localPosition.y);
     }
 
     public void OrderedToWork(int targetFloorIndex)

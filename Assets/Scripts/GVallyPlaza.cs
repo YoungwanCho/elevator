@@ -22,12 +22,17 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     private const float GATE_POS_Z_MAX = 4.0f;
     private const float GATE_POS_Z_MIN = -4.0f;
-    private const float GATE_POS_X_MAX = 5.5f;
+    private const float GATE_POS_X_MAX = 5.5f;          
     private const float GATE_POS_X_MIN = -5.5f;
 
+    public void Awake()
+    {
+        Application.runInBackground = true;
+    } 
 
     public void Start()
     {
+        
         GateOperationSec = new WaitForSeconds(1.0f);
         WaitForTheDoorToOpenSec = new WaitForSeconds(2.0f);
         BuildingPlaza();
@@ -65,6 +70,25 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             list.Add(i);
         }
         return list;
+    }
+    /* @brief
+     * 엘레베이터의 정지 유무와 상관없이, 현재 위치를 가져올수있는 함수
+     * 알고리즘이 간단한게 더 좋은 방법이 있으면 그 때 교체 하자
+     **/
+    public int GetFlootValueFromHeight(float height)
+    {
+        int result = 0;
+
+        for(int i=0; i<floorHeightArr.Length; i++)
+        {
+            if (floorHeightArr[i] <= i)
+            {
+                result = i;
+                break;
+            }
+        }
+
+        return result;
     }
 
 #region BuildGvallyPlaza
