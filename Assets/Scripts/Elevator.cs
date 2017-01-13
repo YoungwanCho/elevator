@@ -36,10 +36,15 @@ public class ElevatorCommand
 
 public class Elevator : MonoBehaviour
 {
+    public int PassengerClearanceCount { get { return (LIMITED_PASSENGER_COUNT - this._passengerList.Count); } }
+    public int PassengerCount { get { return this._passengerList.Count; } }
+    public eSchedule Schedule { get { return this._schedule; } }
+    public int CurrentFloorIndex { get { return this._currentFloorIndex; } }
+    public int ElevatorIndex { get { return this._elevatorIndex; } }
     public Transform passengerLine_ = null;
 
-    public enum eSchedule {STANDBY = 0, UP = 1, DOWN = 2}; // 다음 예정 행동
-    public eSchedule _schedule = eSchedule.STANDBY;
+    public enum eSchedule {STANDBY = 0, UP = 1, DOWN = 2}; // 상태
+    private eSchedule _schedule = eSchedule.STANDBY;
     private List<ElevatorObserver> _observerList = new List<ElevatorObserver>();
     private List<Person> _passengerList = new List<Person>();
     private List<int> _targetFloorList = new List<int>();
@@ -48,6 +53,8 @@ public class Elevator : MonoBehaviour
     private int operationCount = 0;
     private bool _isArrivalAction = false;
     private int _currentFloorIndex = 0; // 정지하지 않아도 움직이는 위치에 의해서 계속 업데이트됨 
+
+    private const int LIMITED_PASSENGER_COUNT = 20;
 
     public void Initialize(int index)
     {
@@ -81,17 +88,55 @@ public class Elevator : MonoBehaviour
         this._currentFloorIndex = GVallyPlaza.Instance.GetFlootValueFromHeight(this.transform.localPosition.y);
     }
 
+    public bool IsCanStopFloor(eSchedule orderWant, int orderFloorIndex)
+    {
+        bool result = false;
+
+        if (this._schedule != eSchedule.STANDBY && orderWant != this._schedule) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
+        {
+            return result;
+        }
+
+        switch(_schedule)
+        {
+            case eSchedule.UP:
+                {
+                    result = (orderFloorIndex >= this._currentFloorIndex);
+                }
+                break;
+            case eSchedule.DOWN:
+                {
+                    result = (orderFloorIndex <= this._currentFloorIndex);
+                }
+                break;
+            case eSchedule.STANDBY:
+                {
+                    result = true;
+                }
+                break; 
+        }
+
+        if (!result)
+        {
+            return result;
+        }
+
+        result = this.PassengerClearanceCount > 0;
+
+        return result;
+    }
+
     public void OrderedToWork(int targetFloorIndex)
     {
         bool isComplete = this.AddTargetFloorList(targetFloorIndex);
         if (isComplete) //@breif 중복 호출을 피하기 위한 조치
         {
             StartCoroutine(Work());
-            Debug.Log(string.Format("{0}층으로 운행을 명 받았습니다.", targetFloorIndex));
+            Debug.Log(string.Format("{0}호기 엘베는 {1}층으로 운행을 명 받았습니다.", this._elevatorIndex, targetFloorIndex));
         }
         else
         {
-            Debug.Log(string.Format("{0}층은 이미 명령 받은 층입니다.", targetFloorIndex));
+            Debug.Log(string.Format("{0}호기 엘베는 {0}층을 이미 명령 받았었습니다.", targetFloorIndex));
         }
     }
 
@@ -200,6 +245,7 @@ public class Elevator : MonoBehaviour
         else
         {
             this._schedule = eSchedule.STANDBY;
+            GVallyPlaza.Instance.ElevatorStranBy(this);
         }
     }
 
@@ -213,6 +259,7 @@ public class Elevator : MonoBehaviour
 
     private IEnumerator ArrivalAction(Floor currentFloorComponent)
     {
+        Debug.Log(string.Format("{0}호기 엘베가 {1}층에 도착했습니다.", this._elevatorIndex, currentFloorComponent.FloorIndex));
         _isArrivalAction = true;
         yield return StartCoroutine("GateOpen"); // 1. 문이 열리고
 
@@ -225,11 +272,11 @@ public class Elevator : MonoBehaviour
             yield return StartCoroutine(exitEvent); // 사람들이 내리고
         }
 
-        List<Person> enterList = this.MakeEnterPersonList(this._passengerList, waitingList, 20);
+        List<Person> enterList = this.MakeEnterPersonList(this._passengerList, waitingList, LIMITED_PASSENGER_COUNT);
         
         if (enterList.Count > 0)
         {
-            IEnumerator enterEvent = EnterPerson(this._passengerList, enterList, currentFloorComponent, 20);
+            IEnumerator enterEvent = EnterPerson(this._passengerList, enterList, currentFloorComponent, LIMITED_PASSENGER_COUNT);
             yield return StartCoroutine(enterEvent); // 사람들이 타고
         }
 
@@ -273,7 +320,8 @@ public class Elevator : MonoBehaviour
             passengerList.Add(enterList[i]);
             //currentfloorcomponent.exitfloorperson(enterlist[i]);
             enterList[i].ExitFloor(currentFloorComponent);
-            Debug.Log(string.Format("{0}이 {1}층에서 엘베에 탑승했습니다.", enterList[i].Name, currentFloorComponent.FloorIndex));
+            Debug.Log(string.Format("{0}이 {1}층에서 엘베에 탑승했고 {2}층 버튼을 눌렀습니다.", enterList[i].Name, currentFloorComponent.FloorIndex, enterList[i].TargetFloor));
+            this.OrderedToWork(enterList[i].TargetFloor); // 사람이 탑승후 목적층을 눌렀다
             UpdatePassengerLine();
             yield return new WaitForSeconds(0.15f);
         }         

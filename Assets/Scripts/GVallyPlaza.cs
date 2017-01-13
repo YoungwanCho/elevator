@@ -20,6 +20,9 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     public static WaitForSeconds GateOperationSec = null; //@TODO: 초단위가 아니라 실제 움직이 필요한 시간을 계산하는 방식으로 수정
     public static WaitForSeconds WaitForTheDoorToOpenSec = null;
 
+    private List<int> _orderListDown = new List<int>();
+    private List<int> _orderListUp = new List<int>();
+
     private const float GATE_POS_Z_MAX = 4.0f;
     private const float GATE_POS_Z_MIN = -4.0f;
     private const float GATE_POS_X_MAX = 5.5f;          
@@ -32,22 +35,89 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     public void Start()
     {
-        
+        _orderListDown.Clear();
+        _orderListUp.Clear();
         GateOperationSec = new WaitForSeconds(1.0f);
         WaitForTheDoorToOpenSec = new WaitForSeconds(2.0f);
         BuildingPlaza();
     }
 
-    public int OperationElevator(int floorIndex)
+    public void AddOrderListUp(int orderFloorIndex)
     {
-        int elevatorIndex = 0;
+        if(_orderListUp.Contains(orderFloorIndex))
+        {
+            return;
+        }
+        this._orderListUp.Add(orderFloorIndex);
+        this.OrderProcess();
+    }
 
-        // 엘레베이터 오퍼레이팅 명령
+    public void AddOrderListDown(int orderFloorIndex)
+    {
+        if(_orderListDown.Contains(orderFloorIndex))
+        {
+            return;
+        }
+        this._orderListDown.Add(orderFloorIndex);
+        this.OrderProcess();
+    }
 
-        elevatorComponentArr[elevatorIndex].OrderedToWork(floorIndex);
+    public void ElevatorStranBy(Elevator elevator)
+    {
+        Debug.Log(string.Format("{0}호기 엘레베이터가 스탠바이 상태라고 연락을 줬다", elevator.ElevatorIndex));
+        this.OrderProcess();
+    }
 
+    private void OrderProcess()
+    {
+        int upCount = this._orderListUp.Count;
+        int downCount = this._orderListDown.Count;
 
-        return elevatorIndex;
+        Elevator elevator = null;
+        int orderFloorIndex = 0;
+
+        for(int i=0; i<this._orderListUp.Count; i++)
+        {
+            orderFloorIndex = this._orderListUp[i];
+            elevator = LookForTheBestElavator(Elevator.eSchedule.UP, orderFloorIndex);
+            if(elevator != null)
+            {
+                this._orderListUp.Remove(orderFloorIndex);
+                elevator.OrderedToWork(orderFloorIndex);
+            }
+        }
+
+        for (int i=0; i<this._orderListDown.Count; i++)
+        {
+            orderFloorIndex = this._orderListDown[i];
+            elevator = LookForTheBestElavator(Elevator.eSchedule.DOWN, orderFloorIndex);
+            if(elevator != null)
+            {
+                this._orderListDown.Remove(orderFloorIndex);
+                elevator.OrderedToWork(orderFloorIndex);
+            }
+        }
+    }
+
+    private Elevator LookForTheBestElavator(Elevator.eSchedule direction, int orderFloorIndex)
+    {
+        List<Elevator> elevatorList = new List<Elevator>();
+        Elevator elevator = null;
+        for(int i=0; i<elevatorComponentArr.Length; i++)
+        {
+            elevator = elevatorComponentArr[i];
+            if (elevator.IsCanStopFloor(direction, orderFloorIndex))
+            {
+                break;
+            }
+            else
+            {
+                elevator = null;
+            }
+        }
+        Debug.Log(string.Format("{0}층으로 운행이 적합한 엘레베이터 {1}호기", orderFloorIndex, elevator == null? "None" : elevator.name));
+        return elevator; // null이 리턴 될 경우도 생각해야한다
+
     }
 
     public Floor GetFloorComponent(int floorIndex)
@@ -87,7 +157,6 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
                 break;
             }
         }
-
         return result;
     }
 

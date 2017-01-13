@@ -116,18 +116,14 @@ public class Floor : MonoBehaviour
     {
         for(int i=0; i<waitingDownPersonList.Count; i++)
         {
-            int targetFloorIndex = waitingDownPersonList[i].TargetFloor;
-            Debug.Log(string.Format("{0}층에서 {1}까지 까지 Down 오더를 넣었다", this._floorIndex, targetFloorIndex));
-            GVallyPlaza.Instance.OperationElevator(targetFloorIndex);
-
+            Debug.Log(string.Format("{0}층에서 Down 오더를 넣었다", this._floorIndex));
+            GVallyPlaza.Instance.AddOrderListDown(this._floorIndex);
         }
 
         for(int i=0; i<waitingUpPersonList.Count; i++)
         {
-            int targetFloorIndex = waitingUpPersonList[i].TargetFloor;
-            Debug.Log(string.Format("{0}층에서 {1}까지 까지 Up 오더를 넣었다", this._floorIndex, targetFloorIndex));
-            GVallyPlaza.Instance.OperationElevator(targetFloorIndex);
- 
+            Debug.Log(string.Format("{0}층에서 Up 오더를 넣었다", this._floorIndex));
+            GVallyPlaza.Instance.AddOrderListUp(this._floorIndex);
         }
     }
 

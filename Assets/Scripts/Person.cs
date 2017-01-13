@@ -66,7 +66,7 @@ public class Person : MonoBehaviour
                 break;
             case PERSON_STATE.WANT_DOWN :
             case PERSON_STATE.WANT_UP:
-                Debug.Log(string.Format("{0}번째 사람이 {1}층에서 {2}상태입니다.", this.Name,  this._currentFloorComponent.FloorIndex, this._state));
+                Debug.Log(string.Format("{0}번째 사람이 {1}층에서 {2}층으로 {3}상태입니다.", this.Name,  this._currentFloorComponent.FloorIndex, this._targetFloor, this._state));
                 _currentFloorComponent.WantExitFloorPerson(this);
                 yield return null;
                 break;
