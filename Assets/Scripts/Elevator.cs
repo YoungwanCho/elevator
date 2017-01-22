@@ -36,24 +36,32 @@ public class ElevatorCommand
 
 public class Elevator : MonoBehaviour
 {
+    public enum eDirection { UP = 0, DOWN = 1, STANDBY = 2, TURNING = 3 }; //방향 
+
+    public eDirection Schedule { get { return this._schedule; } }
+    public eDirection Direction { get { return this._direction; } }
     public int PassengerClearanceCount { get { return (LIMITED_PASSENGER_COUNT - this._passengerList.Count); } }
     public int PassengerCount { get { return this._passengerList.Count; } }
-    public eSchedule Schedule { get { return this._schedule; } }
     public int CurrentFloorIndex { get { return this._currentFloorIndex; } }
     public int ElevatorIndex { get { return this._elevatorIndex; } }
+
     public Transform passengerLine_ = null;
 
-    public enum eSchedule {STANDBY = 0, UP = 1, DOWN = 2}; // 상태
-    private eSchedule _schedule = eSchedule.STANDBY;
+    private eDirection _schedule = eDirection.STANDBY;
+    private eDirection _direction = eDirection.STANDBY;
+
     private List<ElevatorObserver> _observerList = new List<ElevatorObserver>();
     private List<Person> _passengerList = new List<Person>();
     private List<int> _targetFloorList = new List<int>();
-    
-    private int _elevatorIndex;
-    private int operationCount = 0;
-    private bool _isArrivalAction = false;
-    private int _currentFloorIndex = 0; // 정지하지 않아도 움직이는 위치에 의해서 계속 업데이트됨 
 
+    private int _elevatorIndex = 0;
+    private int _operationCount = 0;
+    private int _currentFloorIndex = 0; // 정지하지 않아도 움직이는 위치에 의해서 계속 업데이트됨
+    private int _turningFloorIndex = 0; // 터닝포인트 층의 값
+
+    private bool _isArrivalAction = false;
+    private bool _isTurning = false; // ex) 내려가기 위해 올라간다던지 그런 상황인가?
+    
     private const int LIMITED_PASSENGER_COUNT = 20;
 
     public void Initialize(int index)
@@ -88,28 +96,28 @@ public class Elevator : MonoBehaviour
         this._currentFloorIndex = GVallyPlaza.Instance.GetFlootValueFromHeight(this.transform.localPosition.y);
     }
 
-    public bool IsCanStopFloor(eSchedule orderWant, int orderFloorIndex)
+    public bool IsCanStopFloor(eDirection orderWant, int orderFloorIndex)
     {
         bool result = false;
 
-        if (this._schedule != eSchedule.STANDBY && orderWant != this._schedule) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
+        if (this._schedule != eDirection.STANDBY && orderWant != this._schedule) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
         {
             return result;
         }
 
         switch(_schedule)
         {
-            case eSchedule.UP:
+            case eDirection.UP:
                 {
                     result = (orderFloorIndex >= this._currentFloorIndex);
                 }
                 break;
-            case eSchedule.DOWN:
+            case eDirection.DOWN:
                 {
                     result = (orderFloorIndex <= this._currentFloorIndex);
                 }
                 break;
-            case eSchedule.STANDBY:
+            case eDirection.STANDBY:
                 {
                     result = true;
                 }
@@ -146,16 +154,16 @@ public class Elevator : MonoBehaviour
         if (_targetFloorList.Contains(floorIndex))
             return result;
 
-        switch (this._schedule)
+        switch (_schedule)
         {
-            case eSchedule.UP:
+            case eDirection.UP:
                 if (this._currentFloorIndex >= floorIndex)
                 {
                     Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
                     return result;
                 }
                 break;
-            case eSchedule.DOWN:                
+            case eDirection.DOWN:                
                 if(this._currentFloorIndex <= floorIndex)
                 {
                     Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
@@ -169,7 +177,7 @@ public class Elevator : MonoBehaviour
         _targetFloorList.Add(floorIndex);
         _targetFloorList.Sort();
 
-        if(_schedule == eSchedule.DOWN)
+        if(_schedule == eDirection.DOWN)
         {
             _targetFloorList.Reverse();
         }
@@ -197,15 +205,15 @@ public class Elevator : MonoBehaviour
         int targetFloorIndex = _targetFloorList[0];
         Vector3 targetPos = GVallyPlaza.Instance.GetFloorComponent(targetFloorIndex).GetGateWorldPosition(this._elevatorIndex);
         ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform.position, targetPos, callBack);
-        Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this._elevatorIndex, targetFloorIndex, operationCount));
+        Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this._elevatorIndex, targetFloorIndex, _operationCount));
         // @TODO: 추후에 효과 적으로 수정한다 여기단에서 끊지 않으면 진행을 할수없어서 임시방편...
         if (command.Direction == Vector3.up)
         {
-            _schedule = eSchedule.UP;
+            _schedule = eDirection.UP;
         }
         else
         {
-            _schedule = eSchedule.DOWN;
+            _schedule = eDirection.DOWN;
         }        
         StartCoroutine("Moving", command);
     }
@@ -228,7 +236,7 @@ public class Elevator : MonoBehaviour
         IEnumerator arrivalEvent = ArrivalAction(arrivalFloorComponent);
         yield return StartCoroutine(arrivalEvent);
 
-        operationCount++;
+        _operationCount++;
         this.transform.position = command.TargetWorldPos;
         if (command.CallBack != null)
             command.CallBack(command.TargetFloorIndex);
@@ -244,7 +252,7 @@ public class Elevator : MonoBehaviour
         }
         else
         {
-            this._schedule = eSchedule.STANDBY;
+            this._schedule = eDirection.STANDBY;
             GVallyPlaza.Instance.ElevatorStranBy(this);
         }
     }
@@ -375,14 +383,14 @@ public class Elevator : MonoBehaviour
     }
 
     // @Breif 현재층에서 엘레베이터의 스케쥴에 따라 해당층에서 대기중인 전체 목록을 가져온다
-    private List<Person> GetFloorWaitingList(Floor floor, eSchedule schedlue)
+    private List<Person> GetFloorWaitingList(Floor floor, eDirection schedlue)
     {
         List<Person> waitingList = null;
-        if(schedlue == eSchedule.UP)
+        if(schedlue == eDirection.UP)
         {
             waitingList = floor.WaitingUpList;
         }
-        else if(schedlue == eSchedule.DOWN)
+        else if(schedlue == eDirection.DOWN)
         {
             waitingList = floor.WaitingDownList;
         }

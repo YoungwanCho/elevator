@@ -79,7 +79,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         for(int i=0; i<this._orderListUp.Count; i++)
         {
             orderFloorIndex = this._orderListUp[i];
-            elevator = LookForTheBestElavator(Elevator.eSchedule.UP, orderFloorIndex);
+            elevator = LookForTheBestElavator(Elevator.eDirection.UP, orderFloorIndex);
             if(elevator != null)
             {
                 this._orderListUp.Remove(orderFloorIndex);
@@ -90,7 +90,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         for (int i=0; i<this._orderListDown.Count; i++)
         {
             orderFloorIndex = this._orderListDown[i];
-            elevator = LookForTheBestElavator(Elevator.eSchedule.DOWN, orderFloorIndex);
+            elevator = LookForTheBestElavator(Elevator.eDirection.DOWN, orderFloorIndex);
             if(elevator != null)
             {
                 this._orderListDown.Remove(orderFloorIndex);
@@ -99,7 +99,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         }
     }
 
-    private Elevator LookForTheBestElavator(Elevator.eSchedule direction, int orderFloorIndex)
+    private Elevator LookForTheBestElavator(Elevator.eDirection direction, int orderFloorIndex)
     {
         List<Elevator> elevatorList = new List<Elevator>();
         Elevator elevator = null;
