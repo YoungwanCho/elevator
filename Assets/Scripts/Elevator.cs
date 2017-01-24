@@ -4,16 +4,17 @@ using UnityEngine;
 
 public class ElevatorCommand
 {
-    private Vector3 _targetWorldPos = Vector3.zero;
-    private Vector3 _direction = Vector3.zero;
-    private System.Action<int> _callBack = null;
-    private int _targetFloorIndex = 0;
-    private List<Person> boardedPersonList = new List<Person>(); // 탑승인원
-
+    public System.Action<int> CallBack { get { return this._callBack; } }
     public Vector3 TargetWorldPos { get { return this._targetWorldPos; } }
     public Vector3 Direction { get { return this._direction; } }
-    public System.Action<int> CallBack { get { return this._callBack; } }
     public int TargetFloorIndex { get { return _targetFloorIndex; } }
+
+    private System.Action<int> _callBack = null;
+    private Vector3 _targetWorldPos = Vector3.zero;
+    private Vector3 _direction = Vector3.zero;
+    private List<Person> boardedPersonList = new List<Person>(); // 탑승인원
+    private int _targetFloorIndex = 0;
+    private bool _isTurning = false;
 
     public ElevatorCommand(int targetFloorIndex, Vector3 startWorldPos, Vector3 targetWorldPos, System.Action<int> callBack)
     {
@@ -100,28 +101,52 @@ public class Elevator : MonoBehaviour
     {
         bool result = false;
 
-        if (this._schedule != eDirection.STANDBY && orderWant != this._schedule) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
+        if (_isTurning)
         {
-            return result;
-        }
+            if (this._schedule != eDirection.STANDBY && orderWant != this._schedule) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
+            {
+                return result;
+            }
 
-        switch(_schedule)
+            switch (_schedule)
+            {
+                case eDirection.UP:
+                    {
+                        result = (_turningFloorIndex >= this._currentFloorIndex);
+                    }
+                    break;
+                case eDirection.DOWN:
+                    {
+                        result = (_turningFloorIndex <= this._currentFloorIndex);
+                    }
+                    break;
+            }
+        }
+        else
         {
-            case eDirection.UP:
-                {
-                    result = (orderFloorIndex >= this._currentFloorIndex);
-                }
-                break;
-            case eDirection.DOWN:
-                {
-                    result = (orderFloorIndex <= this._currentFloorIndex);
-                }
-                break;
-            case eDirection.STANDBY:
-                {
-                    result = true;
-                }
-                break; 
+            if (this._schedule != eDirection.STANDBY && orderWant != this._direction) // 엘베가 움직이는 방향과 오더의 방향이 다르면 리턴
+            {
+                return result;
+            }
+
+            switch (_direction)
+            {
+                case eDirection.UP:
+                    {
+                        result = (orderFloorIndex >= this._currentFloorIndex);
+                    }
+                    break;
+                case eDirection.DOWN:
+                    {
+                        result = (orderFloorIndex <= this._currentFloorIndex);
+                    }
+                    break;
+                case eDirection.STANDBY:
+                    {
+                        result = true;
+                    }
+                    break;
+            }
         }
 
         if (!result)
@@ -134,7 +159,7 @@ public class Elevator : MonoBehaviour
         return result;
     }
 
-    public void OrderedToWork(int targetFloorIndex)
+    public void OrderedToWork(eDirection schedule, int targetFloorIndex)
     {
         bool isComplete = this.AddTargetFloorList(targetFloorIndex);
         if (isComplete) //@breif 중복 호출을 피하기 위한 조치
@@ -148,28 +173,58 @@ public class Elevator : MonoBehaviour
         }
     }
 
+    private bool CheckIsTurning(eDirection schdule, int currentFloorIndex, int targetFloorIndex)
+    {
+        bool result = false;
+        return result;
+    }
+
     private bool AddTargetFloorList(int floorIndex)
     {
         bool result = false;
         if (_targetFloorList.Contains(floorIndex))
             return result;
 
-        switch (_schedule)
+        if (_isTurning)
         {
-            case eDirection.UP:
-                if (this._currentFloorIndex >= floorIndex)
-                {
-                    Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
-                    return result;
-                }
-                break;
-            case eDirection.DOWN:                
-                if(this._currentFloorIndex <= floorIndex)
-                {
-                    Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
-                    return result;
-                }                
-                break;                
+            switch (_schedule)
+            {
+                case eDirection.UP:
+                    if (this._turningFloorIndex >= floorIndex)
+                    {
+                        Debug.Log("터닝 층 보다 높은층이라 오더를 넣을수 없습니다.");
+                        return result;
+                    }
+                    break;
+                case eDirection.DOWN:
+                    if (this._turningFloorIndex <= floorIndex)
+                    {
+                        Debug.Log("터닝 층 보다 낮은층이라 오더를 넣을수 없습니다.");
+                        return result;
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (_schedule)
+            {
+                case eDirection.UP:
+                    if (this._currentFloorIndex >= floorIndex)
+                    {
+                        Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
+                        return result;
+                    }
+                    break;
+                case eDirection.DOWN:
+                    if (this._currentFloorIndex <= floorIndex)
+                    {
+                        Debug.Log("이미 지니가서 오더를 넣을수 없습니다.");
+                        return result;
+                    }
+                    break;
+            }
+
         }
 
         result = true;
@@ -210,10 +265,12 @@ public class Elevator : MonoBehaviour
         if (command.Direction == Vector3.up)
         {
             _schedule = eDirection.UP;
+            _direction = eDirection.UP;
         }
         else
         {
             _schedule = eDirection.DOWN;
+            _direction = eDirection.DOWN;
         }        
         StartCoroutine("Moving", command);
     }
@@ -329,7 +386,7 @@ public class Elevator : MonoBehaviour
             //currentfloorcomponent.exitfloorperson(enterlist[i]);
             enterList[i].ExitFloor(currentFloorComponent);
             Debug.Log(string.Format("{0}이 {1}층에서 엘베에 탑승했고 {2}층 버튼을 눌렀습니다.", enterList[i].Name, currentFloorComponent.FloorIndex, enterList[i].TargetFloor));
-            this.OrderedToWork(enterList[i].TargetFloor); // 사람이 탑승후 목적층을 눌렀다
+            this.OrderedToWork((eDirection)enterList[i].State, enterList[i].TargetFloor); // 사람이 탑승후 목적층을 눌렀다
             UpdatePassengerLine();
             yield return new WaitForSeconds(0.15f);
         }         

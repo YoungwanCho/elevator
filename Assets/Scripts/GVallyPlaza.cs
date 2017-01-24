@@ -83,7 +83,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             if(elevator != null)
             {
                 this._orderListUp.Remove(orderFloorIndex);
-                elevator.OrderedToWork(orderFloorIndex);
+                elevator.OrderedToWork(Elevator.eDirection.UP, orderFloorIndex);
             }
         }
 
@@ -94,7 +94,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             if(elevator != null)
             {
                 this._orderListDown.Remove(orderFloorIndex);
-                elevator.OrderedToWork(orderFloorIndex);
+                elevator.OrderedToWork(Elevator.eDirection.DOWN, orderFloorIndex);
             }
         }
     }
