@@ -70,10 +70,12 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
 
     private void OrderProcess()
     {
+        Elevator elevator = null;
+        bool isTurning = false;
         int upCount = this._orderListUp.Count;
         int downCount = this._orderListDown.Count;
 
-        Elevator elevator = null;
+
         int orderFloorIndex = 0;
 
         for(int i=0; i<this._orderListUp.Count; i++)
@@ -82,8 +84,9 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             elevator = LookForTheBestElavator(Elevator.eDirection.UP, orderFloorIndex);
             if(elevator != null)
             {
+                isTurning = IsNeedToTurning(elevator, Elevator.eDirection.UP, orderFloorIndex);
                 this._orderListUp.Remove(orderFloorIndex);
-                elevator.OrderedToWork(Elevator.eDirection.UP, orderFloorIndex);
+                elevator.OrderedToWork(isTurning, Elevator.eDirection.UP, orderFloorIndex);
             }
         }
 
@@ -93,10 +96,30 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             elevator = LookForTheBestElavator(Elevator.eDirection.DOWN, orderFloorIndex);
             if(elevator != null)
             {
+                isTurning = IsNeedToTurning(elevator, Elevator.eDirection.DOWN, orderFloorIndex);
                 this._orderListDown.Remove(orderFloorIndex);
-                elevator.OrderedToWork(Elevator.eDirection.DOWN, orderFloorIndex);
+                elevator.OrderedToWork(isTurning, Elevator.eDirection.DOWN, orderFloorIndex);
             }
         }
+    }
+
+    public bool IsNeedToTurning(Elevator elevator, Elevator.eDirection wantDirection,  int orderFloorIndex)
+    {
+        bool isTurning = false;
+        switch (wantDirection)
+        {
+            case Elevator.eDirection.UP:
+                {
+                    isTurning = (elevator.CurrentFloorIndex <= orderFloorIndex) ? false : true;
+                    break;
+                }
+            case Elevator.eDirection.DOWN:
+                {
+                    isTurning = (elevator.CurrentFloorIndex >= orderFloorIndex) ? false : true;
+                    break;
+                }
+        }
+        return isTurning;
     }
 
     private Elevator LookForTheBestElavator(Elevator.eDirection direction, int orderFloorIndex)
@@ -117,7 +140,6 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
         }
         Debug.Log(string.Format("{0}층으로 운행이 적합한 엘레베이터 {1}호기", orderFloorIndex, elevator == null? "None" : elevator.name));
         return elevator; // null이 리턴 될 경우도 생각해야한다
-
     }
 
     public Floor GetFloorComponent(int floorIndex)

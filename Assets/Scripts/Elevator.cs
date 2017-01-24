@@ -159,13 +159,29 @@ public class Elevator : MonoBehaviour
         return result;
     }
 
-    public void OrderedToWork(eDirection schedule, int targetFloorIndex)
+    // @Breif 층에서 호출시 지밸리플라자를 통해 호출됨(외부 호출) 
+    public void OrderedToWork(bool isTurning, eDirection schedule, int targetFloorIndex)
+    {
+        this._isTurning = isTurning;
+        if(_isTurning)
+        {
+            _turningFloorIndex = targetFloorIndex;
+        }
+        this.OrderedToWork(schedule, targetFloorIndex);
+    }
+
+    // @Brief 엘레베이터에 탑승해서 목적층 버튼을 누른경우 호출됨
+    private void OrderedToWork(eDirection schedule, int targetFloorIndex) 
     {
         bool isComplete = this.AddTargetFloorList(targetFloorIndex);
         if (isComplete) //@breif 중복 호출을 피하기 위한 조치
         {
             StartCoroutine(Work());
             Debug.Log(string.Format("{0}호기 엘베는 {1}층으로 운행을 명 받았습니다.", this._elevatorIndex, targetFloorIndex));
+            if (_isTurning)
+            {
+                Debug.Log(string.Format("{0}호기 엘베는 터닝 하기 위한 오더를 받았습니다.", targetFloorIndex));
+            }
         }
         else
         {
@@ -185,7 +201,7 @@ public class Elevator : MonoBehaviour
         if (_targetFloorList.Contains(floorIndex))
             return result;
 
-        if (_isTurning)
+        if (_isTurning) // 현재 운행중인 엘레베이터만 해당이 된다 (운행중이면서 이미 터닝을 위해 움직이는 경우)
         {
             switch (_schedule)
             {
@@ -262,14 +278,15 @@ public class Elevator : MonoBehaviour
         ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform.position, targetPos, callBack);
         Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this._elevatorIndex, targetFloorIndex, _operationCount));
         // @TODO: 추후에 효과 적으로 수정한다 여기단에서 끊지 않으면 진행을 할수없어서 임시방편...
+
         if (command.Direction == Vector3.up)
         {
-            _schedule = eDirection.UP;
+            _schedule = _isTurning ? eDirection.DOWN : eDirection.UP;
             _direction = eDirection.UP;
         }
         else
         {
-            _schedule = eDirection.DOWN;
+            _schedule = _isTurning ? eDirection.UP : eDirection.DOWN;
             _direction = eDirection.DOWN;
         }        
         StartCoroutine("Moving", command);
@@ -324,8 +341,18 @@ public class Elevator : MonoBehaviour
 
     private IEnumerator ArrivalAction(Floor currentFloorComponent)
     {
-        Debug.Log(string.Format("{0}호기 엘베가 {1}층에 도착했습니다.", this._elevatorIndex, currentFloorComponent.FloorIndex));
         _isArrivalAction = true;
+        if(_isTurning)
+        {
+            _isTurning = false;
+            _turningFloorIndex = 0;
+            Debug.Log(string.Format("{0}호기 엘베가 {1}층에서 터닝하기 위해 도착했습니다.", _elevatorIndex, currentFloorComponent.FloorIndex));
+        }
+        else
+        {
+            Debug.Log(string.Format("{0}호기 엘베가 {1}층에 도착했습니다.", this._elevatorIndex, currentFloorComponent.FloorIndex));
+        }
+
         yield return StartCoroutine("GateOpen"); // 1. 문이 열리고
 
         List<Person> waitingList = this.GetFloorWaitingList(currentFloorComponent, this._schedule);
