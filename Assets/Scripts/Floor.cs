@@ -129,12 +129,14 @@ public class Floor : MonoBehaviour
 
     private void UpdateWaitingLine()
     {
+        Debug.LogWarning(string.Format("UpdateWaitingLine FloorIndex : {0}, OnThePersonCount : {1}", this._floorIndex, this.onTheFloorPersonList.Count));
         int waitlinecount = onTheFloorPersonList.Count;
 
         for (int i = 0; i < waitlinecount; i++)
         {
             onTheFloorPersonList[i].transform.parent = waittingLine_;
             onTheFloorPersonList[i].transform.localPosition = new Vector3(1 * i, 0.0f, 0.0f);
+            Debug.LogWarning(string.Format("Name : {0}, localPosition : {1}", onTheFloorPersonList[i].name, onTheFloorPersonList[i].transform.localPosition));
         }
     }
  
@@ -160,6 +162,9 @@ public class Floor : MonoBehaviour
 
     private void CreatePerson()
     {
+        if (_floorIndex != 0)
+            return;
+
         Person personInstance = null;
 
         for(int i=0; i<1; i++)

@@ -76,7 +76,7 @@ public class Person : MonoBehaviour
     private IEnumerator Task()
     {
         Debug.Log(string.Format("{0}은 {1}층에서 볼일을 보고 있다", this._name, this._currentFloorComponent.FloorIndex));
-        yield return new WaitForSeconds(Random.Range(10, 20));
+        yield return new WaitForSeconds(Random.Range(2, 5));
         this.WhereToGo();        
     }
 
@@ -88,7 +88,7 @@ public class Person : MonoBehaviour
         floorList =  GVallyPlaza.Instance.GetMovableFloorList(this._currentFloorComponent.FloorIndex);
         randomIndex = Random.Range(0, floorList.Count);
         
-        this._targetFloor = floorList[randomIndex];
+        this._targetFloor = _targetFloor == 0 ? 19 : 0;  //floorList[randomIndex];
 
         if(this._targetFloor > this._currentFloorComponent.FloorIndex)
             this._state = PERSON_STATE.WANT_UP;

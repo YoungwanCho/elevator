@@ -120,6 +120,11 @@ public class Elevator : MonoBehaviour
                         result = (_turningFloorIndex <= this._currentFloorIndex);
                     }
                     break;
+                case eDirection.STANDBY:
+                    {
+                        result = true;
+                    }
+                    break;
             }
         }
         else
@@ -176,12 +181,15 @@ public class Elevator : MonoBehaviour
         bool isComplete = this.AddTargetFloorList(targetFloorIndex);
         if (isComplete) //@breif 중복 호출을 피하기 위한 조치
         {
-            StartCoroutine(Work());
-            Debug.Log(string.Format("{0}호기 엘베는 {1}층으로 운행을 명 받았습니다.", this._elevatorIndex, targetFloorIndex));
             if (_isTurning)
             {
                 Debug.Log(string.Format("{0}호기 엘베는 터닝 하기 위한 오더를 받았습니다.", targetFloorIndex));
             }
+            else
+            {
+                Debug.Log(string.Format("{0}호기 엘베는 {1}층으로 운행을 명 받았습니다.", this._elevatorIndex, targetFloorIndex));
+            }
+            StartCoroutine("Work");
         }
         else
         {
@@ -244,15 +252,7 @@ public class Elevator : MonoBehaviour
         }
 
         result = true;
-
         _targetFloorList.Add(floorIndex);
-        _targetFloorList.Sort();
-
-        if(_schedule == eDirection.DOWN)
-        {
-            _targetFloorList.Reverse();
-        }
-
         return result;
     }
 
@@ -264,9 +264,19 @@ public class Elevator : MonoBehaviour
         _targetFloorList.Remove(floorIndex);
     }
 
+    private void TargetFLoorListSort(eDirection schedule)
+    {
+        _targetFloorList.Sort();
+        if(schedule == eDirection.DOWN)
+        {
+            _targetFloorList.Reverse();
+        }
+    }
+
     private IEnumerator Work()
     {
         yield return StartCoroutine(HoldOnArrivalAction());
+        TargetFLoorListSort(this._schedule);
         this.MoveToDestination(this.MovingEnd);
     }
 
@@ -322,7 +332,9 @@ public class Elevator : MonoBehaviour
 
         if(_targetFloorList.Count > 0)
         {
-            MoveToDestination(this.MovingEnd);
+            //MoveToDestination(this.MovingEnd);
+
+            StartCoroutine("Work");
         }
         else
         {
