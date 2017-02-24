@@ -5,32 +5,33 @@ using UnityEngine;
 public class ElevatorCommand
 {
     public System.Action<int> CallBack { get { return this._callBack; } }
-    public Vector3 TargetWorldPos { get { return this._targetWorldPos; } }
+    public Transform TargetTranform { get { return this._targetTranform; } }
     public Vector3 Direction { get { return this._direction; } }
     public int TargetFloorIndex { get { return _targetFloorIndex; } }
 
     private System.Action<int> _callBack = null;
-    private Vector3 _targetWorldPos = Vector3.zero;
+    private Transform _targetTranform = null;
     private Vector3 _direction = Vector3.zero;
     private List<Person> boardedPersonList = new List<Person>(); // 탑승인원
     private int _targetFloorIndex = 0;
-    private bool _isTurning = false;
 
-    public ElevatorCommand(int targetFloorIndex, Vector3 startWorldPos, Vector3 targetWorldPos, System.Action<int> callBack)
+    public ElevatorCommand(int targetFloorIndex, Transform thisTransform, Transform targetTransform, System.Action<int> callBack)
     {
         this._targetFloorIndex = targetFloorIndex;
-        this._targetWorldPos = targetWorldPos;
-        this._direction = this.GetDirectionToGo(startWorldPos, targetWorldPos);
+        this._targetTranform = targetTransform;
+        this._direction = this.GetDirectionToGo(thisTransform, targetTransform);
         this._callBack = callBack;
     }
 
-    private Vector3 GetDirectionToGo(Vector3 selfWorldPos, Vector3 targetWorldPos)
+    private Vector3 GetDirectionToGo(Transform thisTransform, Transform targetTransform)
     {
         Vector3 direction = Vector3.zero;
-        if (selfWorldPos.y < targetWorldPos.y)
+        if (thisTransform.position.y < targetTransform.position.y)
             direction = Vector3.up;
-        else
+        else if (thisTransform.position.y > targetTransform.position.y)
             direction = Vector3.down;
+        else if (thisTransform.position.y == targetTransform.position.y)
+            direction = Vector3.zero;
         return direction;
     }
 }
@@ -165,18 +166,18 @@ public class Elevator : MonoBehaviour
     }
 
     // @Breif 층에서 호출시 지밸리플라자를 통해 호출됨(외부 호출) 
-    public void OrderedToWork(bool isTurning, eDirection schedule, int targetFloorIndex)
+    public void OrderedToWork(bool isTurning, int targetFloorIndex)
     {
         this._isTurning = isTurning;
         if(_isTurning)
         {
             _turningFloorIndex = targetFloorIndex;
         }
-        this.OrderedToWork(schedule, targetFloorIndex);
+        this.OrderedToWork(targetFloorIndex);
     }
 
     // @Brief 엘레베이터에 탑승해서 목적층 버튼을 누른경우 호출됨
-    private void OrderedToWork(eDirection schedule, int targetFloorIndex) 
+    private void OrderedToWork(int targetFloorIndex) 
     {
         bool isComplete = this.AddTargetFloorList(targetFloorIndex);
         if (isComplete) //@breif 중복 호출을 피하기 위한 조치
@@ -284,8 +285,8 @@ public class Elevator : MonoBehaviour
     {
         StopCoroutine("Moving");
         int targetFloorIndex = _targetFloorList[0];
-        Vector3 targetPos = GVallyPlaza.Instance.GetFloorComponent(targetFloorIndex).GetGateWorldPosition(this._elevatorIndex);
-        ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform.position, targetPos, callBack);
+        Transform targetTransform = GVallyPlaza.Instance.GetFloorComponent(targetFloorIndex).GetGateTranform(this._elevatorIndex);
+        ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform, targetTransform, callBack);
         Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this._elevatorIndex, targetFloorIndex, _operationCount));
         // @TODO: 추후에 효과 적으로 수정한다 여기단에서 끊지 않으면 진행을 할수없어서 임시방편...
 
@@ -294,34 +295,33 @@ public class Elevator : MonoBehaviour
             _schedule = _isTurning ? eDirection.DOWN : eDirection.UP;
             _direction = eDirection.UP;
         }
-        else
+        else if(command.Direction == Vector3.down)
         {
             _schedule = _isTurning ? eDirection.UP : eDirection.DOWN;
             _direction = eDirection.DOWN;
-        }        
+        }
+        else if (command.Direction == Vector3.zero)
+        {
+            _schedule = eDirection.STANDBY;
+            _direction = eDirection.STANDBY;
+        }
+                 
         StartCoroutine("Moving", command);
     }
 
     private IEnumerator Moving(ElevatorCommand command)
     {
-        float dist = 0.0f;
-
         do
         {
-            dist = Vector3.Distance(this.transform.position, command.TargetWorldPos);
-            this.transform.Translate(command.Direction * Time.deltaTime * GVallyPlaza.ELEVATOR_SPEED);
+            this.transform.position = Vector3.MoveTowards(this.transform.position, command.TargetTranform.position, GVallyPlaza.ELEVATOR_SPEED * Time.deltaTime);
             yield return null;
-
-            //if (command.TargetFloorIndex == 15)
-            //    OrderedToWork(1);
-        } while (dist >= 0.1f);
+        } while (this.transform.position != command.TargetTranform.position);
 
         Floor arrivalFloorComponent = GVallyPlaza.Instance.GetFloorComponent(command.TargetFloorIndex);
         IEnumerator arrivalEvent = ArrivalAction(arrivalFloorComponent);
         yield return StartCoroutine(arrivalEvent);
 
         _operationCount++;
-        this.transform.position = command.TargetWorldPos;
         if (command.CallBack != null)
             command.CallBack(command.TargetFloorIndex);
     }
@@ -425,7 +425,7 @@ public class Elevator : MonoBehaviour
             //currentfloorcomponent.exitfloorperson(enterlist[i]);
             enterList[i].ExitFloor(currentFloorComponent);
             Debug.Log(string.Format("{0}이 {1}층에서 엘베에 탑승했고 {2}층 버튼을 눌렀습니다.", enterList[i].Name, currentFloorComponent.FloorIndex, enterList[i].TargetFloor));
-            this.OrderedToWork((eDirection)enterList[i].State, enterList[i].TargetFloor); // 사람이 탑승후 목적층을 눌렀다
+            this.OrderedToWork(enterList[i].TargetFloor); // 사람이 탑승후 목적층을 눌렀다
             UpdatePassengerLine();
             yield return new WaitForSeconds(0.15f);
         }         
@@ -489,6 +489,10 @@ public class Elevator : MonoBehaviour
         else if(schedlue == eDirection.DOWN)
         {
             waitingList = floor.WaitingDownList;
+        }
+        else if(schedlue == eDirection.STANDBY)
+        {
+            waitingList = floor.WaitingUpList.Count >= floor.WaitingDownList.Count ? floor.WaitingUpList : floor.WaitingDownList;
         }
         return waitingList;
     }

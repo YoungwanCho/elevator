@@ -24,12 +24,15 @@ public class Floor : MonoBehaviour
 
     public void Initialize(Vector3[] gatePosArr, int floorIndex)
     {
-        this._floorIndex = floorIndex;
-        CreateGateObject(gatePosArr);
-        CreatePerson();
+
+
         onTheFloorPersonList.Clear();
         waitingDownPersonList.Clear();
         waitingUpPersonList.Clear();
+        this._floorIndex = floorIndex;
+        CreateGateObject(gatePosArr);
+        CreatePerson();
+        Debug.Log(string.Format("FloorIndex : {0}, Initialize", this._floorIndex));
     }
 
     #region observer
@@ -93,7 +96,7 @@ public class Floor : MonoBehaviour
 
     public void WantExitFloorPerson(Person person)
     {
-        if (onTheFloorPersonList.Contains(person))
+        if (!onTheFloorPersonList.Contains(person))
         {
             Debug.Log("현재 층에 존재 하지 않는 사람이 탈출을 시도합니다.");
             return;
@@ -140,9 +143,14 @@ public class Floor : MonoBehaviour
         }
     }
  
-    public Vector3 GetGateWorldPosition(int gateIndex)
+    //public Vector3 GetGateWorldPosition(int gateIndex)
+    //{
+    //    return gateWorldPostionArr[gateIndex];
+    //}
+
+    public Transform GetGateTranform(int gateIndex)
     {
-        return gateWorldPostionArr[gateIndex];
+        return gateComponentArr[gateIndex].transform;
     }
 
     private void CreateGateObject(Vector3[] gatePosArr)
@@ -167,7 +175,7 @@ public class Floor : MonoBehaviour
 
         Person personInstance = null;
 
-        for(int i=0; i<1; i++)
+        for(int i=0; i<10; i++)
         {
             personInstance = FactoryBehavior.Instantiate<Person>("Prefabs/Person", null, Vector3.zero, Quaternion.identity, Vector3.one, string.Format("{0}층의 {1}번째 사람", _floorIndex, i));
             personInstance.Initialize(i, this);

@@ -43,6 +43,7 @@ public class Person : MonoBehaviour
     {
         this.UpdateFloorInstance(currentFloorComponent);
         currentFloorComponent.EnterFloorPerson(this);
+        _state = PERSON_STATE.TASK;
         Action();
     }
 

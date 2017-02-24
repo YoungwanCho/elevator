@@ -86,7 +86,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             {
                 isTurning = IsNeedToTurning(elevator, Elevator.eDirection.UP, orderFloorIndex);
                 this._orderListUp.Remove(orderFloorIndex);
-                elevator.OrderedToWork(isTurning, Elevator.eDirection.UP, orderFloorIndex);
+                elevator.OrderedToWork(isTurning, orderFloorIndex);
             }
         }
 
@@ -98,7 +98,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
             {
                 isTurning = IsNeedToTurning(elevator, Elevator.eDirection.DOWN, orderFloorIndex);
                 this._orderListDown.Remove(orderFloorIndex);
-                elevator.OrderedToWork(isTurning, Elevator.eDirection.DOWN, orderFloorIndex);
+                elevator.OrderedToWork(isTurning, orderFloorIndex);
             }
         }
     }
@@ -198,7 +198,7 @@ public class GVallyPlaza : UnitySingleton<GVallyPlaza>
     {
         for (int i = 0; i < MAX_ELEVATOR_COUNT; i++)
         {
-            elevatorComponentArr[i] = FactoryBehavior.Instantiate<Elevator>("Prefabs/Elevator", elevatorParent_, gateFixedPos[i], Quaternion.identity, Vector3.one, string.Format("{0}Unit", i + 1));
+            elevatorComponentArr[i] = FactoryBehavior.Instantiate<Elevator>("Prefabs/Elevator", elevatorParent_, floorComponentArr[0].gateComponentArr[i].transform.localPosition, Quaternion.identity, Vector3.one, string.Format("{0}Unit", i + 1));
             elevatorComponentArr[i].Initialize(i);
         }
     }
