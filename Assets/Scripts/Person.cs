@@ -9,7 +9,7 @@ public class Person : MonoBehaviour
     public PERSON_STATE State{get {return this._state;} }
     public string Name {get {return this._name;} }
     public int TargetFloor{get {return this._targetFloor;} }
-
+    public SpriteRenderer indexNumber_ = null;
 
     private PERSON_STATE _state = PERSON_STATE.TASK;
     public Floor _currentFloorComponent = null;
@@ -24,6 +24,7 @@ public class Person : MonoBehaviour
         this._name = string.Format("{0}번째사람", indexCount++);
         this.gameObject.name = this._name;
         this._targetFloor = 0;
+        UpdateUI(personIndex);
     }
 
     public void UpdateFloorInstance(Floor currentFloor)
@@ -51,6 +52,12 @@ public class Person : MonoBehaviour
     {
         currentFloorComponent.ExitFloorPerson(this);
         UpdateFloorInstance(null);
+    }
+
+    private void UpdateUI(int index)
+    {
+        Sprite spr= Resources.Load<Sprite>(string.Format("Exclude_AtlasImages/CommonUI/Number{0}", index));
+        indexNumber_.sprite = spr;
     }
 
     private void Action()
@@ -89,7 +96,7 @@ public class Person : MonoBehaviour
         floorList =  GVallyPlaza.Instance.GetMovableFloorList(this._currentFloorComponent.FloorIndex);
         randomIndex = Random.Range(0, floorList.Count);
         
-        this._targetFloor = _targetFloor == 0 ? 19 : 0;  //floorList[randomIndex];
+        this._targetFloor = floorList[randomIndex];
 
         if(this._targetFloor > this._currentFloorComponent.FloorIndex)
             this._state = PERSON_STATE.WANT_UP;

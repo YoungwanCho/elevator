@@ -184,7 +184,7 @@ public class Elevator : MonoBehaviour
         {
             if (_isTurning)
             {
-                Debug.Log(string.Format("{0}호기 엘베는 터닝 하기 위한 오더를 받았습니다.", targetFloorIndex));
+                Debug.Log(string.Format("{0}호기 엘베는 터닝 하기 위한 오더를 받았습니다.", this._elevatorIndex));
             }
             else
             {
@@ -284,12 +284,15 @@ public class Elevator : MonoBehaviour
     private void MoveToDestination(System.Action<int> callBack)
     {
         StopCoroutine("Moving");
+        eDirection preSchedule = this._schedule;
+        eDirection preDirection = this._direction;
+
         int targetFloorIndex = _targetFloorList[0];
         Transform targetTransform = GVallyPlaza.Instance.GetFloorComponent(targetFloorIndex).GetGateTranform(this._elevatorIndex);
         ElevatorCommand command = new ElevatorCommand(targetFloorIndex, this.transform, targetTransform, callBack);
         Debug.Log(string.Format("{0}호기, 목표:{1}층, 운행카운트:{2}", this._elevatorIndex, targetFloorIndex, _operationCount));
         // @TODO: 추후에 효과 적으로 수정한다 여기단에서 끊지 않으면 진행을 할수없어서 임시방편...
-
+        
         if (command.Direction == Vector3.up)
         {
             _schedule = _isTurning ? eDirection.DOWN : eDirection.UP;
@@ -305,8 +308,18 @@ public class Elevator : MonoBehaviour
             _schedule = eDirection.STANDBY;
             _direction = eDirection.STANDBY;
         }
+
+        if(IsCheckBug(preSchedule, _schedule, preDirection, _direction))
+        {
+            Debug.LogError(string.Format("{0}, {1}, {2}, {3}", preSchedule, _schedule, preDirection, _direction));
+        }
                  
         StartCoroutine("Moving", command);
+    }
+
+    private bool IsCheckBug(eDirection preSchedule, eDirection curSchedule, eDirection preDirection, eDirection curDirection)
+    {
+        return (preSchedule != curSchedule || preDirection != curDirection);
     }
 
     private IEnumerator Moving(ElevatorCommand command)
@@ -339,6 +352,7 @@ public class Elevator : MonoBehaviour
         else
         {
             this._schedule = eDirection.STANDBY;
+            this._direction = eDirection.STANDBY;
             GVallyPlaza.Instance.ElevatorStranBy(this);
         }
     }
